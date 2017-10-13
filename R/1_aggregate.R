@@ -1,0 +1,183 @@
+get_n_days <- function(unit,n_units) {
+  if(unit == "day") {
+    n_days <- n_units
+  } else if(unit == "week"){
+    n_days <- n_units * 7
+  } else if(unit == "month"){
+    n_days <- n_units * 30
+  } else if(unit == "6 months"){
+    n_days <- n_units * 180
+  } else if(unit == "year"){
+    n_days <- n_units * 365
+  }
+  ddays(n_days)
+}
+
+
+
+aggregate_sequences <- function(unaggregated_data,
+                     format = "%m-%d-%Y",
+                     calendar = FALSE,
+                     unit = "week",
+                     n_units = 1,
+                     anchor_table = NA,
+                     anchor_vector = NA,
+                     base_date = NA,
+                     occurence = min,
+                     multiset = FALSE,
+                     include_date = FALSE) {
+
+  n_days <- get_n_days(unit,n_units)
+
+  names(unaggregated_data) <- c("id","date","event")
+
+  unaggregated_data2 <-
+    unaggregated_data %>%
+    mutate(date = parse_date(date,format))
+
+  if(!is.na(anchor_table) || !is.na(anchor_vector)){
+
+    if(is.data.frame(anchor_table)){
+
+      names(anchor_table) <- c("id","anchor_date")
+
+      anchor_table <-
+        anchor_table %>%
+        mutate(anchor_date = parse_date(anchor_date,format))
+
+    } else if(!is.na(anchor_vector)) {
+      anchor_table <-
+        unaggregated_data2 %>%
+        filter(event %in% anchor_vector) %>%
+        group_by(id) %>%
+        summarise(anchor_date = min(date))
+    }
+
+    aggregated_data <-
+      unaggregated_data2 %>%
+      left_join(anchor_table, by = "id") %>%
+      group_by(id) %>%
+      mutate(n_ndays = (date - anchor_date)/n_days,
+             agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays), ceiling(n_ndays)),
+             agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)) %>%
+      arrange(id, agg_n_ndays) %>%
+      mutate(agg_period =  dense_rank(agg_n_ndays))
+
+  } else if(calendar){
+
+    aggregated_data <-
+      unaggregated_data2 %>%
+      mutate(agg_date = floor_date(date, paste0(n_units, " ", unit, "s"))) %>%
+      group_by(id) %>%
+      mutate(agg_period =  dense_rank(agg_date))
+
+  } else if(!is.na(base_date)){
+
+    if(typeof(base_date) == "closure") {
+      base_date <- base_date(unaggregated_data2$date)
+    }
+
+    aggregated_data <-
+      unaggregated_data2 %>%
+      mutate(n_ndays = (date - base_date)/n_days,
+             agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays), ceiling(n_ndays)),
+             agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)) %>%
+      group_by(id) %>%
+      arrange(id, agg_n_ndays) %>%
+      mutate(agg_period =  dense_rank(agg_n_ndays))
+
+  } else {
+    aggregated_data <-
+      unaggregated_data2 %>%
+      group_by(id) %>%
+      mutate(n_ndays = (date - occurence(date))/n_days,
+             agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays), ceiling(n_ndays)),
+             agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)) %>%
+      arrange(id, agg_n_ndays) %>%
+      mutate(agg_period =  dense_rank(agg_n_ndays))
+  }
+
+
+
+  if(!multiset){
+    aggregated_data <-
+      aggregated_data %>%
+      group_by(id,event) %>%
+      slice(1)
+  }
+
+
+
+  if(include_date){
+    aggregated_data <-
+      aggregated_data %>%
+      select(id, date, period = agg_period, event) %>%
+      arrange(id, period, date ,event)
+  } else{
+    aggregated_data <-
+      aggregated_data %>%
+      select(id, period = agg_period, event) %>%
+      arrange(id, period, event)
+  }
+
+  class(aggregated_data) <- c("Aggregated_Dataframe", class(aggregated_data))
+
+  aggregated_data
+}
+
+
+convert_to_sequence <- function(df_seq){
+  if(!"Aggregated_Dataframe" %in% class(df_seq)){
+    warning("Are you sure the sequence dataframe you passed is already aggregated?")
+  }
+  df_seq <-
+    df_seq %>%
+    group_by(id) %>%
+    nest(.key = "nested_id") %>%
+    mutate(sequence = .$nested_id %>%
+             map(function(df_id){
+               seqs <-
+                 df_id %>%
+                 group_by(period) %>%
+                 nest(.key = "list_data") %>%
+                 mutate(seqs = .$list_data %>%
+                          map(~.$event)) %>%
+                 pull(seqs)
+               class(seqs) <- c("Sequence", class(seqs))
+               seqs
+             }),
+          ) %>%
+    select(id, sequence)
+  names(df_seq$sequence) <- df_seq$id
+  class(df_seq$sequence) <- c("Sequence_List", class(df_seq$sequence))
+
+  df_seq
+}
+
+print.Sequence <- function(sequence){
+  sequence %>%
+  map_chr(function(itemset){
+    itemset <- str_c(itemset, collapse = ", ")
+    paste0("(", itemset, ")")
+  }) %>%
+  str_c(collapse = " ") %>%
+  paste0("<", ., ">") %>%
+  print()
+}
+
+#' Pipe graphics
+#'
+#' Like dplyr, ggvis also uses the pipe function, \code{\%>\%} to turn
+#' function composition into a series of imperative statements.
+#'
+#' @importFrom magrittr %>%
+#' @name %>%
+#' @rdname pipe
+#' @export
+#' @param lhs,rhs A visualisation and a function to apply to it
+#' @examples
+#' # Instead of
+#' layer_points(ggvis(mtcars, ~mpg, ~wt))
+#' # you can write
+#' mtcars %>% ggvis(~mpg, ~wt) %>% layer_points()
+`%>%` <- magrittr::`%>%`

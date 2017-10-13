@@ -1,0 +1,10 @@
+exportPattern("^[[:alpha:]]+")
+importFrom(dplyr,"select","filter","mutate","summarise","group_by","dense_rank")
+importFrom(magrittr,"%>%")
+import(purrr)
+import(ggplot2)
+import(stringr)
+import(tidyr)
+import(lubridate)
+
+
