@@ -141,28 +141,52 @@ convert_to_sequence <- function(df_seq){
                  group_by(period) %>%
                  nest(.key = "list_data") %>%
                  mutate(seqs = .$list_data %>%
-                          map(~.$event)) %>%
+                          map(function(itemset){
+                            events <- itemset$event
+                            class(events) <- c("Sequence_Itemset", class(events))
+                            events
+                          })) %>%
                  pull(seqs)
                class(seqs) <- c("Sequence", class(seqs))
                seqs
              }),
+           sequence_formatted = map_chr(sequence, format_sequence)
           ) %>%
-    select(id, sequence)
+    select(id, sequence, sequence_formatted)
   names(df_seq$sequence) <- df_seq$id
   class(df_seq$sequence) <- c("Sequence_List", class(df_seq$sequence))
 
   df_seq
 }
 
+format_sequence <- function(sequence){
+  sequence <-
+    sequence %>%
+    map_chr(function(itemset){
+      itemset <- str_c(itemset, collapse = ", ")
+      paste0("(", itemset, ")")
+    }) %>%
+    str_c(collapse = " ")
+  paste0("<", sequence, ">")
+}
+
 print.Sequence <- function(sequence){
   sequence %>%
-  map_chr(function(itemset){
-    itemset <- str_c(itemset, collapse = ", ")
-    paste0("(", itemset, ")")
-  }) %>%
-  str_c(collapse = " ") %>%
-  paste0("<", ., ">") %>%
-  print()
+  format_sequence() %>%
+  cat()
+}
+
+print.Sequence_List <- function(sequences){
+  # print(sequences)
+  walk2(sequences, names(sequences), function(sequence, id){
+      cat(id,": ", format_sequence(sequence), "\n")
+    })
+}
+
+print_raw <- function(obj){
+  obj %>%
+    unclass() %>%
+    print()
 }
 
 #' Pipe graphics

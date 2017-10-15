@@ -1,0 +1,38 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+```{r}
+library(tidyverse)
+library(purrr)
+```
+The classes:
+1. Sequence
+2. W_Sequence
+3. Sequence_Itemset
+4. W_Sequence_itemset
+5. Sequence_List, Aggregated_Data
+
+
+```{r}
+inp <- read_csv("./data/inp.csv")
+
+inp2 <- inp %>%
+  aggregate_sequences(format = "%Y-%m-%d") %>%
+  convert_to_sequence() 
+
+inp2$sequence
+str(inp2$sequence)
+get_weighted_sequence(inp2$sequence)
+
+inter_sequence_distance(inp2$sequence[[1]],inp2$sequence[[2]]) 
+
+wseq_1 <- align_sequences(inp2$sequence[[1]],inp2$sequence[[2]]) 
+
+inter_sequence_distance(wseq_1, inp2$sequence[[2]])
+
+```
