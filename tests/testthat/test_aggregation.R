@@ -39,3 +39,30 @@ test_that("Mutliset works", {
   expect_equal(inp2[[1]][[2]] %>% length(), 2)
   expect_equal(inp3[[1]][[2]] %>% length(), 3)
 })
+
+
+
+test_that("Preaggregation works", {
+  t10 <- read_csv("../../data/t10.csv",
+                  col_names = c("id", "period", "event"),
+                  skip = 1, n_max = 150)
+
+  expect_equal(suppressWarnings(t10 %>%
+                                  get_weighted_sequence() %>%
+                                  class()),
+               "W_Sequence",
+               fixed = TRUE)
+
+  expect_warning(get_weighted_sequence(t10),
+                 "Assuming that the dataframe you are using is pre-aggregated. If not, please use use the aggregate_sequences function.\n",
+                 fixed = TRUE)
+
+  names(t10) <- c("ID", "period", "event")
+  expect_error(suppressWarnings(read_csv("../../data/t10.csv",
+                          col_names = c("ID", "period", "event"),
+                          skip = 1,  n_max = 150) %>%
+               get_weighted_sequence()),
+               "There should be 3 columns named id, period and event (all lower case).",
+               fixed = TRUE)
+})
+

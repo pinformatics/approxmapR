@@ -13,7 +13,18 @@ get_n_days <- function(unit,n_units) {
   ddays(n_days)
 }
 
+pre_aggregated <- function(df){
+  if(!(all(names(df) == c("id", "period", "event")))) {
+    stop("There should be 3 columns named id, period and event (all lower case).")
+  }
 
+  if(!is.integer(df$period)){
+    stop("period not an integer")
+  }
+
+  class(df) <- c("Aggregated_Dataframe", "tbl_df", "tbl", "data.frame")
+  df
+}
 
 aggregate_sequences <- function(unaggregated_data,
                      format = "%m-%d-%Y",

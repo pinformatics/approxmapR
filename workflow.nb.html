@@ -173,41 +173,23 @@ $(document).ready(function () {
 
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5cbmBgYCJ9 -->
-<pre class="r"><code>library(tidyverse)
-</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyB0aWR5dmVyc2U6IGdncGxvdDJcbkxvYWRpbmcgdGlkeXZlcnNlOiB0aWJibGVcbkxvYWRpbmcgdGlkeXZlcnNlOiB0aWR5clxuTG9hZGluZyB0aWR5dmVyc2U6IHJlYWRyXG5Mb2FkaW5nIHRpZHl2ZXJzZTogcHVycnJcbkxvYWRpbmcgdGlkeXZlcnNlOiBkcGx5clxuQ29uZmxpY3RzIHdpdGggdGlkeSBwYWNrYWdlcyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tXG5maWx0ZXIoKTogZHBseXIsIHN0YXRzXG5sYWcoKTogICAgZHBseXIsIHN0YXRzXG4ifQ== -->
-<pre><code>Loading tidyverse: ggplot2
-Loading tidyverse: tibble
-Loading tidyverse: tidyr
-Loading tidyverse: readr
-Loading tidyverse: purrr
-Loading tidyverse: dplyr
-Conflicts with tidy packages -------------------------------------------------------------------------
-filter(): dplyr, stats
-lag():    dplyr, stats</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KHB1cnJyKVxuYGBgIn0= -->
-<pre class="r"><code>library(tidyverse)
-library(purrr)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>The classes: 1. Sequence 2. W_Sequence 3. Sequence_Itemset 4. W_Sequence_itemset 5. Sequence_List, Aggregated_Data</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaW5wMlxuXG5gYGAifQ== -->
-<pre class="r"><code>inp2
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudDEwICU+JVxuZ2V0X3dlaWdodGVkX3NlcXVlbmNlKClcblxuYGBgIn0= -->
+<pre class="r"><code>t10 %&gt;%
+get_weighted_sequence()
 </code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiPChKOjEsIEs6MiwgTToyLCBCOjEsIEQ6MiwgRToxLCBMOjEsIFo6MSk6OCAoVjoxLCBMOjIsIEs6MiwgTToxLCBDOjIsIFk6MSwgQjoxLCBFOjEpOjggKEs6MSwgVzoxLCBNOjIsIEk6NSwgSjozLCBBOjQsIEw6MSwgWjoxKToxMCAoWjoxLCBLOjEsIEw6MywgWDoxKTo2PiA6IDEwXG4ifQ== -->
-<pre><code>&lt;(J:1, K:2, M:2, B:1, D:2, E:1, L:1, Z:1):8 (V:1, L:2, K:2, M:1, C:2, Y:1, B:1, E:1):8 (K:1, W:1, M:2, I:5, J:3, A:4, L:1, Z:1):10 (Z:1, K:1, L:3, X:1):6&gt; : 10</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiQXNzdW1pbmcgdGhhdCB0aGUgZGF0YWZyYW1lIHlvdSBhcmUgdXNpbmcgaXMgcHJlLWFnZ3JlZ2F0ZWQuIElmIG5vdCwgcGxlYXNlIHVzZSB1c2UgdGhlIGFnZ3JlZ2F0ZV9zZXF1ZW5jZXMgZnVuY3Rpb24uXG5FcnJvciBpbiBwcmVfYWdncmVnYXRlZCguKSA6IFxuICBUaGVyZSBzaG91bGQgMyBjb2x1bW5zIG5hbWVkIGlkLCBwZXJpb2QgYW5kIGV2ZW50IChhbGwgbG93ZXIgY2FzZSkuXG4ifQ== -->
+<pre><code>Assuming that the dataframe you are using is pre-aggregated. If not, please use use the aggregate_sequences function.
+Error in pre_aggregated(.) : 
+  There should 3 columns named id, period and event (all lower case).</code></pre>
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCmVkaXRvcl9vcHRpb25zOiANCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGlubGluZQ0KLS0tDQoNCg0KYGBge3J9DQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmxpYnJhcnkocHVycnIpDQpgYGANClRoZSBjbGFzc2VzOg0KMS4gU2VxdWVuY2UNCjIuIFdfU2VxdWVuY2UNCjMuIFNlcXVlbmNlX0l0ZW1zZXQNCjQuIFdfU2VxdWVuY2VfaXRlbXNldA0KNS4gU2VxdWVuY2VfTGlzdCwgQWdncmVnYXRlZF9EYXRhDQoNCg0KYGBge3J9DQppbnAgPC0gcmVhZF9jc3YoIi4vZGF0YS9pbnAuY3N2IikNCg0KaW5wMiA8LQ0KICBpbnAgJT4lDQogIGFnZ3JlZ2F0ZV9zZXF1ZW5jZXMoZm9ybWF0ID0gIiVZLSVtLSVkIikgJT4lDQogIGdldF93ZWlnaHRlZF9zZXF1ZW5jZSgpDQoNCmlucDIkc2VxdWVuY2UNCnN0cihpbnAyJHNlcXVlbmNlKQ0KZ2V0X3dlaWdodGVkX3NlcXVlbmNlKGlucDIkc2VxdWVuY2UpDQoNCmludGVyX3NlcXVlbmNlX2Rpc3RhbmNlKGlucDIkc2VxdWVuY2VbWzFdXSxpbnAyJHNlcXVlbmNlW1syXV0pIA0KDQp3c2VxXzEgPC0gYWxpZ25fc2VxdWVuY2VzKGlucDIkc2VxdWVuY2VbWzFdXSxpbnAyJHNlcXVlbmNlW1syXV0pIA0KDQppbnRlcl9zZXF1ZW5jZV9kaXN0YW5jZSh3c2VxXzEsIGlucDIkc2VxdWVuY2VbWzJdXSkNCg0KYGBgDQo=</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCmVkaXRvcl9vcHRpb25zOiANCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGlubGluZQ0KLS0tDQoNCg0KYGBge3IsIGluY2x1ZGUgPSBGfQ0KbGlicmFyeSh0aWR5dmVyc2UpDQpsaWJyYXJ5KHB1cnJyKQ0KYGBgDQpUaGUgY2xhc3NlczoNCjEuIFNlcXVlbmNlDQoyLiBXX1NlcXVlbmNlDQozLiBTZXF1ZW5jZV9JdGVtc2V0DQo0LiBXX1NlcXVlbmNlX2l0ZW1zZXQNCjUuIFNlcXVlbmNlX0xpc3QsIEFnZ3JlZ2F0ZWRfRGF0YQ0KDQoNCmBgYHtyfQ0KaW5wIDwtIHJlYWRfY3N2KCIuL2RhdGEvaW5wLmNzdiIpDQp0MTAgPC0gcmVhZF9jc3YoIi4vZGF0YS90MTAuY3N2IiwgY29sX25hbWVzID0gYygiSUQiLCAicGVyaW9kIiwgImV2ZW50IiksIHNraXAgPSAxLCBuX21heCA9IDE1MCkNCg0KaW5wMiA8LQ0KICBpbnAgJT4lDQogIGFnZ3JlZ2F0ZV9zZXF1ZW5jZXMoZm9ybWF0ID0gIiVZLSVtLSVkIikgJT4lDQogIGdldF93ZWlnaHRlZF9zZXF1ZW5jZSgpDQoNCnQxMCAlPiUNCmdldF93ZWlnaHRlZF9zZXF1ZW5jZSgpDQoNCg0KaW5wMiRzZXF1ZW5jZQ0Kc3RyKGlucDIkc2VxdWVuY2UpDQpnZXRfd2VpZ2h0ZWRfc2VxdWVuY2UoaW5wMiRzZXF1ZW5jZSkNCg0KaW50ZXJfc2VxdWVuY2VfZGlzdGFuY2UoaW5wMiRzZXF1ZW5jZVtbMV1dLGlucDIkc2VxdWVuY2VbWzJdXSkgDQoNCndzZXFfMSA8LSBhbGlnbl9zZXF1ZW5jZXMoaW5wMiRzZXF1ZW5jZVtbMV1dLGlucDIkc2VxdWVuY2VbWzJdXSkgDQoNCmludGVyX3NlcXVlbmNlX2Rpc3RhbmNlKHdzZXFfMSwgaW5wMiRzZXF1ZW5jZVtbMl1dKQ0KDQpgYGANCg==</div>
 
 
 

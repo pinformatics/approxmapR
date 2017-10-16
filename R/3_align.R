@@ -113,6 +113,14 @@ get_weighted_sequence.Aggregated_Dataframe <- function(aggregated_dataframe,
   get_weighted_sequence(fun)
 }
 
+get_weighted_sequence.data.frame <- function(dataframe,
+                                                       fun = sorenson_distance){
+  warning("Assuming that the dataframe you are using is pre-aggregated. If not, please use use the aggregate_sequences function.\n")
+  dataframe %>%
+  pre_aggregated() %>%
+  get_weighted_sequence()
+}
+
 align_sequences <- function(x, ...){
   UseMethod("align_sequences")
 }
@@ -279,6 +287,4 @@ print.W_Sequence <- function(w_sequence, ...){
   format_w_sequence(w_sequence) %>%
   cat()
 }
-
-
 

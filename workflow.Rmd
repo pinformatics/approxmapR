@@ -6,7 +6,7 @@ editor_options:
 ---
 
 
-```{r}
+```{r, include = F}
 library(tidyverse)
 library(purrr)
 ```
@@ -20,11 +20,16 @@ The classes:
 
 ```{r}
 inp <- read_csv("./data/inp.csv")
+t10 <- read_csv("./data/t10.csv", col_names = c("ID", "period", "event"), skip = 1, n_max = 150)
 
 inp2 <-
   inp %>%
   aggregate_sequences(format = "%Y-%m-%d") %>%
   get_weighted_sequence()
+
+t10 %>%
+get_weighted_sequence()
+
 
 inp2$sequence
 str(inp2$sequence)
