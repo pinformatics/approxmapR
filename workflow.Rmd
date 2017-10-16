@@ -21,9 +21,10 @@ The classes:
 ```{r}
 inp <- read_csv("./data/inp.csv")
 
-inp2 <- inp %>%
+inp2 <-
+  inp %>%
   aggregate_sequences(format = "%Y-%m-%d") %>%
-  convert_to_sequence() 
+  get_weighted_sequence()
 
 inp2$sequence
 str(inp2$sequence)

@@ -104,7 +104,14 @@ get_weighted_sequence.Sequence_List <- function(sequence_list,
   w_sequence
 }
 
+get_weighted_sequence.Aggregated_Dataframe <- function(aggregated_dataframe,
+                                                       fun = sorenson_distance){
 
+  aggregated_dataframe %>%
+  convert_to_sequence() %>%
+  .$sequence %>%
+  get_weighted_sequence(fun)
+}
 
 align_sequences <- function(x, ...){
   UseMethod("align_sequences")

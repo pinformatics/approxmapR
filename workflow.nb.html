@@ -198,37 +198,16 @@ library(purrr)</code></pre>
 <p>The classes: 1. Sequence 2. W_Sequence 3. Sequence_Itemset 4. W_Sequence_itemset 5. Sequence_List, Aggregated_Data</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2V0X3dlaWdodGVkX3NlcXVlbmNlKGlucDIkc2VxdWVuY2UpXG5cbmBgYCJ9 -->
-<pre class="r"><code>get_weighted_sequence(inp2$sequence)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaW5wMlxuXG5gYGAifQ== -->
+<pre class="r"><code>inp2
 </code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiQ2FsbGVkIGZyb206IGV2YWwoZXhwciwgZW52aXIsIGVuY2xvcylcbiJ9 -->
-<pre><code>Called from: eval(expr, envir, enclos)</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiPChKOjEsIEs6MiwgTToyLCBCOjEsIEQ6MiwgRToxLCBMOjEsIFo6MSk6OCAoVjoxLCBMOjIsIEs6MiwgTToxLCBDOjIsIFk6MSwgQjoxLCBFOjEpOjggKEs6MSwgVzoxLCBNOjIsIEk6NSwgSjozLCBBOjQsIEw6MSwgWjoxKToxMCAoWjoxLCBLOjEsIEw6MywgWDoxKTo2PiA6IDEwXG4ifQ== -->
+<pre><code>&lt;(J:1, K:2, M:2, B:1, D:2, E:1, L:1, Z:1):8 (V:1, L:2, K:2, M:1, C:2, Y:1, B:1, E:1):8 (K:1, W:1, M:2, I:5, J:3, A:4, L:1, Z:1):10 (Z:1, K:1, L:3, X:1):6&gt; : 10</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxublxuYGBgIn0= -->
-<pre class="r"><code>n</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiZGVidWcgYXQgRjpcXEUtQm9va3NcXERhdGEgU2NpZW5jZVxcR2l0aHViXFxhcHByb3htYXBSL1IvM19hbGlnbi5SIzI1MDogd19zZXF1ZW5jZSA9IGdldF93ZWlnaHRlZF9zZXF1ZW5jZShhbGlnbmVkX3NlcXVlbmNlcyRhbGlnbmVkX3dfc2VxdWVuY2UsIFxuICAgIGFsaWduZWRfc2VxdWVuY2VzJGFsaWduZWRfc2VxdWVuY2UpXG4ifQ== -->
-<pre><code>debug at F:\E-Books\Data Science\Github\approxmapR/R/3_align.R#250: w_sequence = get_weighted_sequence(aligned_sequences$aligned_w_sequence, 
-    aligned_sequences$aligned_sequence)</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYWxpZ25lZF9zZXF1ZW5jZXNcbmBgYCJ9 -->
-<pre class="r"><code>aligned_sequences</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiJGFsaWduZWRfc2VxdWVuY2VcbjwoQSwgSSwgWikgKCkgKCkgKEssIEwsIE0pPlxuJGFsaWduZWRfd19zZXF1ZW5jZVxuPChBOjIpOjIgKFg6MSk6MSAoQzoyLCBZOjEsIEI6MSwgRToxKToyIChEOjEsIFo6MSk6Mj4gOiAyXG4kb3BlcmF0aW9uc1xuWzFdIFwiXCJcbiJ9 -->
-<pre><code>$aligned_sequence
-&lt;(A, I, Z) () () (K, L, M)&gt;
-$aligned_w_sequence
-&lt;(A:2):2 (X:1):1 (C:2, Y:1, B:1, E:1):2 (D:1, Z:1):2&gt; : 2
-$operations
-[1] &quot;&quot;</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuUVxuYGBgIn0= -->
-<pre class="r"><code>Q</code></pre>
-<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCmVkaXRvcl9vcHRpb25zOiANCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGlubGluZQ0KLS0tDQoNCg0KYGBge3J9DQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmxpYnJhcnkocHVycnIpDQpgYGANClRoZSBjbGFzc2VzOg0KMS4gU2VxdWVuY2UNCjIuIFdfU2VxdWVuY2UNCjMuIFNlcXVlbmNlX0l0ZW1zZXQNCjQuIFdfU2VxdWVuY2VfaXRlbXNldA0KNS4gU2VxdWVuY2VfTGlzdCwgQWdncmVnYXRlZF9EYXRhDQoNCg0KYGBge3J9DQppbnAgPC0gcmVhZF9jc3YoIi4vZGF0YS9pbnAuY3N2IikNCg0KaW5wMiA8LSBpbnAgJT4lDQogIGFnZ3JlZ2F0ZV9zZXF1ZW5jZXMoZm9ybWF0ID0gIiVZLSVtLSVkIikgJT4lDQogIGNvbnZlcnRfdG9fc2VxdWVuY2UoKSANCg0KaW5wMiRzZXF1ZW5jZQ0Kc3RyKGlucDIkc2VxdWVuY2UpDQpnZXRfd2VpZ2h0ZWRfc2VxdWVuY2UoaW5wMiRzZXF1ZW5jZSkNCg0KaW50ZXJfc2VxdWVuY2VfZGlzdGFuY2UoaW5wMiRzZXF1ZW5jZVtbMV1dLGlucDIkc2VxdWVuY2VbWzJdXSkgDQoNCndzZXFfMSA8LSBhbGlnbl9zZXF1ZW5jZXMoaW5wMiRzZXF1ZW5jZVtbMV1dLGlucDIkc2VxdWVuY2VbWzJdXSkgDQoNCmludGVyX3NlcXVlbmNlX2Rpc3RhbmNlKHdzZXFfMSwgaW5wMiRzZXF1ZW5jZVtbMl1dKQ0KDQpgYGANCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCmVkaXRvcl9vcHRpb25zOiANCiAgY2h1bmtfb3V0cHV0X3R5cGU6IGlubGluZQ0KLS0tDQoNCg0KYGBge3J9DQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmxpYnJhcnkocHVycnIpDQpgYGANClRoZSBjbGFzc2VzOg0KMS4gU2VxdWVuY2UNCjIuIFdfU2VxdWVuY2UNCjMuIFNlcXVlbmNlX0l0ZW1zZXQNCjQuIFdfU2VxdWVuY2VfaXRlbXNldA0KNS4gU2VxdWVuY2VfTGlzdCwgQWdncmVnYXRlZF9EYXRhDQoNCg0KYGBge3J9DQppbnAgPC0gcmVhZF9jc3YoIi4vZGF0YS9pbnAuY3N2IikNCg0KaW5wMiA8LQ0KICBpbnAgJT4lDQogIGFnZ3JlZ2F0ZV9zZXF1ZW5jZXMoZm9ybWF0ID0gIiVZLSVtLSVkIikgJT4lDQogIGdldF93ZWlnaHRlZF9zZXF1ZW5jZSgpDQoNCmlucDIkc2VxdWVuY2UNCnN0cihpbnAyJHNlcXVlbmNlKQ0KZ2V0X3dlaWdodGVkX3NlcXVlbmNlKGlucDIkc2VxdWVuY2UpDQoNCmludGVyX3NlcXVlbmNlX2Rpc3RhbmNlKGlucDIkc2VxdWVuY2VbWzFdXSxpbnAyJHNlcXVlbmNlW1syXV0pIA0KDQp3c2VxXzEgPC0gYWxpZ25fc2VxdWVuY2VzKGlucDIkc2VxdWVuY2VbWzFdXSxpbnAyJHNlcXVlbmNlW1syXV0pIA0KDQppbnRlcl9zZXF1ZW5jZV9kaXN0YW5jZSh3c2VxXzEsIGlucDIkc2VxdWVuY2VbWzJdXSkNCg0KYGBgDQo=</div>
 
 
 
