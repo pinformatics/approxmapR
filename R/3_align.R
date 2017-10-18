@@ -35,6 +35,8 @@ get_weighted_sequence.Sequence <- function(sequence_1, sequence_2) {
 
 get_weighted_sequence.W_Sequence = function(w_sequence, sequence) {
 
+  n <- attr(w_sequence,"n")
+
   for(i in 1:length(w_sequence)) {
     w_sequence_itemset = w_sequence[[i]]
     itemset = sequence[[i]]
@@ -71,7 +73,17 @@ get_weighted_sequence.W_Sequence = function(w_sequence, sequence) {
     }
   }
 
-  attr(w_sequence,"n") = attr(w_sequence,"n") + 1
+  w_sequence <-
+    map(w_sequence, function(w_sequence_itemset){
+      if(!("W_Sequence_Itemset" %in% class(w_sequence_itemset))){
+        class(w_sequence_itemset) <- c("W_Sequence_Itemset", class(w_sequence_itemset))
+      }
+      w_sequence_itemset
+    })
+
+  attr(w_sequence,"n") = n + 1
+  class(w_sequence) <- c("W_Sequence", class(w_sequence))
+
 
   w_sequence
 }
@@ -80,7 +92,7 @@ get_weighted_sequence.W_Sequence = function(w_sequence, sequence) {
 get_weighted_sequence.Sequence_List <- function(sequence_list,
                                                 fun = sorenson_distance){
 
-  if(length(sequence_list)==1) {
+  if(length(sequence_list) == 1) {
     sequence = sequence_list[[1]]
     w_sequence = vector(mode="list", length(sequence))
     for(i in 1:length(sequence)) {
@@ -93,7 +105,7 @@ get_weighted_sequence.Sequence_List <- function(sequence_list,
   } else {
     w_sequence = align_sequences(sequence_list[[1]],sequence_list[[2]], fun)
 
-    if(length(sequence_list)>2) {
+    if(length(sequence_list) > 2) {
       for(i in 3:length(sequence_list)) {
 
         w_sequence =  align_sequences(w_sequence, sequence_list[[i]], fun)
@@ -118,7 +130,22 @@ get_weighted_sequence.data.frame <- function(dataframe,
   warning("Assuming that the dataframe you are using is pre-aggregated. If not, please use use the aggregate_sequences function.\n")
   dataframe %>%
   pre_aggregated() %>%
-  get_weighted_sequence()
+  get_weighted_sequence(fun)
+}
+
+get_weighted_sequence.Clustered_Dataframe <- function(df_clusters,
+                                                      fun = sorenson_distance){
+  df_clusters <-
+    df_clusters %>%
+      mutate(weighted_sequence = map(df_list, get_weighted_sequence, fun))
+
+  class(df_clusters$weighted_sequence) <-
+    c("W_Sequence_List",
+      class(df_clusters$weighted_sequence))
+
+  class(df_clusters) <- c("W_Sequence_Dataframe", class(df_clusters))
+
+  df_clusters
 }
 
 align_sequences <- function(x, ...){
@@ -182,8 +209,19 @@ align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_dist
   # debug(backtrack)
   aligned_sequences <- backtrack(i, j, aligned_sequence_1, aligned_sequence_2)
 
-  get_weighted_sequence(aligned_sequences$aligned_sequence_1,
-                        aligned_sequences$aligned_sequence_2)
+  w_sequence <-
+    get_weighted_sequence(aligned_sequences$aligned_sequence_1,
+                          aligned_sequences$aligned_sequence_2)
+
+  # weighted_sequence <-
+  #   map(weighted_sequence, function(w_sequence_itemset){
+  #     if(!("W_Sequence_Itemset" %in% class(w_sequence_itemset))){
+  #       class(w_sequence_itemset) <- c(W_Sequence_Itemset, class(w_sequence_itemset))
+  #     }
+  #     w_sequence_itemset
+  #   })
+
+  w_sequence
 
 }
 
@@ -267,24 +305,47 @@ align_sequences.W_Sequence = function(w_sequence,
 
   # message(get_weighted_sequence(aligned_sequences$aligned_w_sequence,
                         # aligned_sequences$aligned_sequence))
-  get_weighted_sequence(aligned_sequences$aligned_w_sequence,
-                        aligned_sequences$aligned_sequence)
+  w_sequence <-
+    get_weighted_sequence(aligned_sequences$aligned_w_sequence,
+                          aligned_sequences$aligned_sequence)
+
+  w_sequence
 }
 
 
-format_w_sequence <- function(w_sequence){
+format_sequence.W_Sequence <- function(w_sequence){
   w_sequence %>%
     map_chr(function(w_itemset){
-      str_c(w_itemset$elements, ":", w_itemset$element_weights) %>%
-        str_c(collapse = ", ") %>%
-        paste0("(", ., ")", ":", w_itemset$itemset_weight)
+      if(length(w_itemset$elements) > 0){
+        str_c(w_itemset$elements, ":", w_itemset$element_weights) %>%
+          str_c(collapse = ", ") %>%
+          paste0("(", ., ")", ":", w_itemset$itemset_weight)
+      }
+      else{
+        NA
+      }
+
     }) %>%
+    .[!is.na(.)] %>%
     str_c(collapse = " ") %>%
     paste0("<", ., ">", " : ", attr(w_sequence, "n"))
 }
 
+format_sequence.W_Sequence_List <- function(w_sequence_list){
+  map_chr(w_sequence_list, function(w_sequence){
+    format_sequence(w_sequence)
+  })
+}
+
 print.W_Sequence <- function(w_sequence, ...){
-  format_w_sequence(w_sequence) %>%
+  format_sequence(w_sequence) %>%
   cat()
 }
+
+print.W_Sequence_List <- function(w_sequence_list, ...){
+  walk(w_sequence_list, function(w_sequence){
+    cat(format_sequence(w_sequence), "\n")
+  })
+}
+
 

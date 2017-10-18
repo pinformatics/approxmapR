@@ -145,22 +145,22 @@ convert_to_sequence <- function(df_seq){
     df_seq %>%
     group_by(id) %>%
     nest(.key = "nested_id") %>%
-    mutate(sequence = .$nested_id %>%
-             map(function(df_id){
-               seqs <-
-                 df_id %>%
-                 group_by(period) %>%
-                 nest(.key = "list_data") %>%
-                 mutate(seqs = .$list_data %>%
-                          map(function(itemset){
-                            events <- itemset$event
-                            class(events) <- c("Sequence_Itemset", class(events))
-                            events
-                          })) %>%
-                 pull(seqs)
-               class(seqs) <- c("Sequence", class(seqs))
-               seqs
-             }),
+    mutate(sequence = map(nested_id,
+                 function(df_id){
+                   seqs <-
+                     df_id %>%
+                     group_by(period) %>%
+                     nest(.key = "list_data") %>%
+                     mutate(seqs = map(list_data,
+                              function(itemset){
+                                events <- itemset$event
+                                class(events) <- c("Sequence_Itemset", class(events))
+                                events
+                              })) %>%
+                     pull(seqs)
+                   class(seqs) <- c("Sequence", class(seqs))
+                   seqs
+                 }),
            sequence_formatted = map_chr(sequence, format_sequence)
           ) %>%
     select(id, sequence, sequence_formatted)
@@ -170,7 +170,11 @@ convert_to_sequence <- function(df_seq){
   df_seq
 }
 
-format_sequence <- function(sequence){
+format_sequence <- function(x, ...){
+  UseMethod("format_sequence")
+}
+
+format_sequence.Sequence <- function(sequence){
   sequence <-
     sequence %>%
     map_chr(function(itemset){
