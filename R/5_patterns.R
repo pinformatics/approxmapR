@@ -2,9 +2,19 @@ filter_pattern <- function(x, ...){
   UseMethod("filter_pattern")
 }
 
+filter_pattern.Clustered_Dataframe <- function(df_clustered, ...){
+  df_clustered %>%
+    get_weighted_sequence() %>%
+      filter_pattern(...)
+}
 
-filter_pattern.data.frame <- function(df_w_sequences, pattern_name = "consensus", ...){
-  if(!("weighted_sequence" %in% names(df_w_sequences))) stop("Please use a dataframe where weighted sequences exist")
+
+filter_pattern.W_Sequence_Dataframe <- function(df_w_sequences, pattern_name = "consensus", ...){
+
+  if(!("weighted_sequence" %in% names(df_w_sequences))){
+      stop("Please use a dataframe where weighted sequences can be calculated")
+  }
+
 
   # expr <- enquo(pattern_name)
   pattern <- paste0(quo_name(pattern_name),"_pattern")

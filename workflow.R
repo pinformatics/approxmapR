@@ -18,7 +18,6 @@ t10 %>%
 inp %>%
   aggregate_sequences(format = "%Y-%m-%d") %>%
   cluster_knn() %>%
-  get_weighted_sequence() %>%
    filter_pattern(threshold = 0.1) %>%
      format_sequence()
 
