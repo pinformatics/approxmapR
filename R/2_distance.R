@@ -14,12 +14,12 @@ sorenson_distance.Sequence_Itemset <- function(sequence_itemset_1, sequence_item
 
 
 sorenson_distance.W_Sequence_Itemset <- function(w_sequence_itemset,sequence_itemset,n) {
-  v = w_sequence_itemset$itemset_weight
-  w = w_sequence_itemset$element_weights
-  x = w_sequence_itemset$elements
-  y = sequence_itemset
-  y_no = length(sequence_itemset)
-  eR = (sum(w) + (y_no * v) - (2 * sum(w[x %in% y]))) / (sum(w) + (y_no * v))
+  v <- w_sequence_itemset$itemset_weight
+  w <- w_sequence_itemset$element_weights
+  x <- w_sequence_itemset$elements
+  y <- sequence_itemset
+  y_no <- length(sequence_itemset)
+  eR <- (sum(w) + (y_no * v) - (2 * sum(w[x %in% y]))) / (sum(w) + (y_no * v))
 
   ((eR * v) + n - v) / n
 }
@@ -58,7 +58,9 @@ inter_sequence_distance <- function(x, ...){
   UseMethod("inter_sequence_distance")
 }
 
-inter_sequence_distance.Sequence <- function(sequence_1, sequence_2,fun = sorenson_distance) {
+inter_sequence_distance.Sequence <- function(sequence_1,
+                                             sequence_2,
+                                             fun = sorenson_distance) {
 
   distance_matrix <- matrix(nrow = length(sequence_1) + 1,
                            ncol = length(sequence_2) + 1)
@@ -84,20 +86,21 @@ inter_sequence_distance.W_Sequence <- function(w_sequence,
                                                sequence,
                                                fun = sorenson_distance) {
 
-  n = attr(w_sequence, "n")
-  distance_matrix = matrix(nrow = length(sequence)+1,ncol = length(w_sequence)+1)
+  n <- attr(w_sequence, "n")
+  distance_matrix <- matrix(nrow = length(sequence) + 1,
+                            ncol = length(w_sequence) + 1)
 
-  distance_matrix[1,] = 0:length(w_sequence)
-  distance_matrix[,1] = 0:length(sequence)
+  distance_matrix[1,] <- 0:length(w_sequence)
+  distance_matrix[,1] <- 0:length(sequence)
 
   for(i in 2:nrow(distance_matrix)) {
     for(j in 2:ncol(distance_matrix)) {
-      sequence_itemset = sequence[[i-1]]
-      w_sequence_itemset = w_sequence[[j-1]]
-      repl = distance_matrix[i-1,j-1] + replace(w_sequence_itemset, sequence_itemset, n, fun)
-      indel_r = distance_matrix[i,j-1] + 1 #indel(w_sequence_itemset, n, fun)
-      indel_d = distance_matrix[i-1,j] + 1 #indel(sequence_itemset, fun)
-      distance_matrix[i,j] = min(repl,indel_d,indel_r)
+      sequence_itemset <- sequence[[i-1]]
+      w_sequence_itemset <- w_sequence[[j-1]]
+      repl <- distance_matrix[i-1,j-1] + replace(w_sequence_itemset, sequence_itemset, n, fun)
+      indel_r <- distance_matrix[i,j-1] + 1 #indel(w_sequence_itemset, n, fun)
+      indel_d <- distance_matrix[i-1,j] + 1 #indel(sequence_itemset, fun)
+      distance_matrix[i,j] <- min(repl,indel_d,indel_r)
     }
   }
 

@@ -36,15 +36,18 @@ filter_pattern.W_Sequence <- function(w_sequence,
                                       noise_threshold = 0,
                                       blank_if_absent = F,
                                       pattern_name = NULL){
-  n = attr(w_sequence, "n")
+  n <- attr(w_sequence, "n")
 
-  elements = unlist(map(w_sequence, function(x) {
-    if(length(x$elements)==0) return(NULL)
-    x$elements
-  }))
+  elements <- unlist(map(w_sequence,
+                         function(x) {
+                          if(length(x$elements)==0) return(NULL)
+                          x$elements
+                         }
+                         )
+                     )
   if(length(elements) == 0) return(weighted_seq)
-  min_occurences = n * threshold
-  min_occurences = max(min_occurences, noise_threshold)
+  min_occurences <- n * threshold
+  min_occurences <- max(min_occurences, noise_threshold)
 
 
 

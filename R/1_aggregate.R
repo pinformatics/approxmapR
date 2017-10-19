@@ -23,6 +23,7 @@ pre_aggregated <- function(df){
   }
 
   class(df) <- c("Aggregated_Dataframe", "tbl_df", "tbl", "data.frame")
+  generate_summary_stats(df)
   df
 }
 
@@ -132,6 +133,7 @@ aggregate_sequences <- function(unaggregated_data,
   }
 
   class(aggregated_data) <- c("Aggregated_Dataframe", class(aggregated_data))
+  generate_summary_stats(aggregated_data)
 
   aggregated_data
 }

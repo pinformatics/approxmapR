@@ -15,6 +15,7 @@ Imports: dplyr,
     purrr,
     magrittr,
     lubridate,
-    stringr
+    stringr,
+    readr
 Suggests: testthat,
     dplyr
