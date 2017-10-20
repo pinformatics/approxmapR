@@ -10,7 +10,7 @@ get_n_days <- function(unit,n_units) {
   } else if(unit == "year"){
     n_days <- n_units * 365
   }
-  ddays(n_days)
+  lubridate::ddays(n_days)
 }
 
 pre_aggregated <- function(df){
@@ -23,6 +23,7 @@ pre_aggregated <- function(df){
   }
 
   class(df) <- c("Aggregated_Dataframe", "tbl_df", "tbl", "data.frame")
+  message("Generating summary statistics of aggregated data...")
   generate_summary_stats(df)
   df
 }
@@ -45,7 +46,7 @@ aggregate_sequences <- function(unaggregated_data,
 
   unaggregated_data2 <-
     unaggregated_data %>%
-    mutate(date = parse_date(date,format))
+    mutate(date = readr::parse_date(date,format))
 
   if(!is.na(anchor_table) || !is.na(anchor_vector)){
 
@@ -55,7 +56,7 @@ aggregate_sequences <- function(unaggregated_data,
 
       anchor_table <-
         anchor_table %>%
-        mutate(anchor_date = parse_date(anchor_date,format))
+        mutate(anchor_date = readr::parse_date(anchor_date,format))
 
     } else if(!is.na(anchor_vector)) {
       anchor_table <-
@@ -79,7 +80,7 @@ aggregate_sequences <- function(unaggregated_data,
 
     aggregated_data <-
       unaggregated_data2 %>%
-      mutate(agg_date = floor_date(date, paste0(n_units, " ", unit, "s"))) %>%
+      mutate(agg_date = lubridate::floor_date(date, paste0(n_units, " ", unit, "s"))) %>%
       group_by(id) %>%
       mutate(agg_period =  dense_rank(agg_date))
 
@@ -133,6 +134,7 @@ aggregate_sequences <- function(unaggregated_data,
   }
 
   class(aggregated_data) <- c("Aggregated_Dataframe", class(aggregated_data))
+  message("Generating summary statistics of aggregated data...")
   generate_summary_stats(aggregated_data)
 
   aggregated_data
@@ -206,19 +208,13 @@ print_raw <- function(obj){
     print()
 }
 
-#' Pipe graphics
-#'
-#' Like dplyr, ggvis also uses the pipe function, \code{\%>\%} to turn
-#' function composition into a series of imperative statements.
+#' Pipe
 #'
 #' @importFrom magrittr %>%
-#' @name %>%
+#' @name
 #' @rdname pipe
 #' @export
-#' @param lhs,rhs A visualisation and a function to apply to it
-#' @examples
-#' # Instead of
-#' layer_points(ggvis(mtcars, ~mpg, ~wt))
-#' # you can write
-#' mtcars %>% ggvis(~mpg, ~wt) %>% layer_points()
-`%>%` <- magrittr::`%>%`
+NULL
+
+
+# "select","filter","mutate","summarise","group_by","dense_rank"

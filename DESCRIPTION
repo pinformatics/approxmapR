@@ -9,7 +9,11 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Imports: dplyr,
+LinkingTo: Rcpp,
+    RcppProgress
+Imports: Rcpp,
+    RcppProgress,
+    dplyr,
     ggplot2,
     tidyr,
     purrr,

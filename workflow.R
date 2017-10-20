@@ -1,13 +1,13 @@
 library(tidyverse)
 
-t10 <- read_csv("./data/t10.csv", col_names = c("id", "period", "event"), skip = 1, n_max = 350)
-inp <- read_csv("./data/inp.csv")
+# pre_agg_full <- read_csv("./data/pre_agg.csv", col_names = c("id", "period", "event"), skip = 1)
+# date_agg <- read_csv("./data/date_agg.csv")
 
-t10 %>%
+pre_agg %>%
 cluster_knn()
 
 
-t10 %>%
+pre_agg %>%
   pre_aggregated() %>%
   cluster_knn() %>%
     get_weighted_sequence() %>%
@@ -15,14 +15,14 @@ t10 %>%
        filter_pattern(pattern_name = "consensus", threshold = 0.75)
 
 
-inp %>%
+date_agg %>%
   aggregate_sequences(format = "%Y-%m-%d") %>%
   cluster_knn() %>%
    filter_pattern(threshold = 0.1) %>%
      format_sequence()
 
 x <-
-t10 %>%
+pre_agg %>%
   pre_aggregated() %>%
   cluster_knn() %>%
   get_weighted_sequence() %>%
@@ -32,3 +32,12 @@ t10 %>%
 
 # %>%
   # pull(consensus)
+
+
+
+
+date_agg %>%
+  aggregate_sequences(format = "%Y-%m-%d") %>%
+    convert_to_sequence() %>%
+     .$sequence %>%
+      inter_sequence_distance()

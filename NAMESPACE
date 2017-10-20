@@ -1,11 +1,13 @@
 exportPattern("^[[:alpha:]]+")
-importFrom(dplyr,"select","filter","mutate","summarise","group_by","dense_rank")
+import(dplyr)
 importFrom(magrittr,"%>%")
-importFrom(readr,"write_csv")
+importFrom(readr,"write_csv", "parse_date")
 import(purrr)
 import(ggplot2)
 importFrom(stringr,"str_c","str_detect")
 import(tidyr)
-import(lubridate)
+useDynLib(approxmapR)
+importFrom(Rcpp, sourceCpp)
+export("%>%")
 
 

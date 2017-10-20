@@ -31,7 +31,6 @@ compare_sequences <- function(df){
 generate_summary_stats <- function(input_data, results_directory = "~", noise_threshold = 0, write_files = FALSE){
 
   input_data <- as_tibble(input_data) %>% ungroup()
-  # message("Getting summary statistics...")
 
   n_unique_items <- input_data %>%
     pull(event) %>% unique() %>%
