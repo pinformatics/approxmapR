@@ -76,6 +76,7 @@ get_weighted_sequence.Sequence_List <- function(sequence_list,
       w_sequence[[i]]$element_weights <- rep(1,length(sequence[[i]]))
     }
     attr(w_sequence, "n") <- 1
+    class_it(w_sequence, "W_Sequence")
 
   } else {
     w_sequence <- align_sequences(sequence_list[[1]],sequence_list[[2]], fun)
@@ -86,9 +87,8 @@ get_weighted_sequence.Sequence_List <- function(sequence_list,
         w_sequence <-  align_sequences(w_sequence, sequence_list[[i]], fun)
       }
     }
+    w_sequence
   }
-
-  w_sequence
 }
 
 get_weighted_sequence.Aggregated_Dataframe <- function(aggregated_dataframe,

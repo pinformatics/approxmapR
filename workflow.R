@@ -1,11 +1,58 @@
 library(tidyverse)
+library(TraMineR)
+library(stringr)
+library(lubridate)
 
-pre_agg_test %>%
+data("mvad")
+df <- as_tibble(mvad)
+
+df <-
+df %>%
+  select(-(2:14)) %>%
+  gather(time, event, -id) %>%
+  mutate(period =  str_c("01 ", time) %>%  str_replace("\\."," ")) %>%
+  select(id, period, event) %>%
+  mutate(period = readr::parse_date(period, format = "%d %b %y") %>%
+    as.character())
+
+x <-
+df %>%
+  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 3) %>%
+  cluster_knn(k = 20)
+
+x %>%
+  filter_pattern() %>%
+  format_sequence() %>%
+  View()
+
+y <- x %>%
+  filter_pattern(threshold = 0.6) %>%
+    format_sequence()
+
+x %>%
+  get_weighted_sequence()
+
+y$consensus_pattern
+
+
+res <-
+pre_agg_full %>%
   pre_aggregated() %>%
-    cluster_knn(k = 2) %>%
-      filter_pattern(threshold = 0.4) %>%
-        format_sequence()
+    cluster_knn(k = 4) %>%
+      get_weighted_sequence()
 
+res <-
+res %>%
+  mutate(weighted_sequence =
+           map(weighted_sequence, function(x){
+             class_it(x,"W_Sequence")
+           }))
+
+class(res$weighted_sequence) <- c("W_Sequence_List", class(res$weighted_sequence))
+res <- class_it(res, "W_Sequence_Dataframe")
+res %>% filter_pattern() %>%
+  format_sequence(compare = T, n_as_percent = F) %>%
+    View()
 
 x <- pre_agg_test %>%
   pre_aggregated() %>%

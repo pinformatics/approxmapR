@@ -18,9 +18,13 @@ pre_aggregated <- function(df){
     stop("There should be 3 columns named id, period and event (all lower case).")
   }
 
-  if(!is.integer(df$period)){
-    stop("period not an integer")
-  }
+  stopifnot(is.integer(df$period))
+  # if(!){
+  #   stop("period should be numeric")
+  # }
+
+  if(!is.character(df$event)) df$event = as.character(df$event)
+
 
   class(df) <- c("Aggregated_Dataframe", "tbl_df", "tbl", "data.frame")
   message("Generating summary statistics of aggregated data...")
@@ -197,9 +201,16 @@ print.Sequence <- function(sequence){
 
 print.Sequence_List <- function(sequences){
   # print(sequences)
-  walk2(sequences, names(sequences), function(sequence_obj, id){
+  if(is.null(names(sequences))){
+    warning("id for the sequences not present")
+    walk(sequences, function(sequence_obj){
+      cat(format_sequence(sequence_obj), "\n")
+    })
+  } else{
+    walk2(sequences, names(sequences), function(sequence_obj, id){
       cat(id,": ", format_sequence(sequence_obj), "\n")
     })
+  }
 }
 
 print_raw <- function(obj){
