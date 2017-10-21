@@ -74,3 +74,9 @@ generate_summary_stats <- function(input_data, results_directory = "~", noise_th
   }
 }
 
+class_it <- function(obj, class_name){
+  class(obj) <- c(class_name, class(obj)) %>%
+    unique()
+  obj
+}
+

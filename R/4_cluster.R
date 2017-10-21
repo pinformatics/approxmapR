@@ -40,11 +40,51 @@ calculate_density_info <- function(distance_matrix, k) {
   })
 }
 
+cluster_lookup <- function(cluster_tbl){
+  tb <- cluster_tbl %>%
+    select(cluster_id, cluster_merge) %>%
+      distinct()
+  cluster_lookup_vec <- tb$cluster_merge
+  names(cluster_lookup_vec) <- tb$cluster_id
+  tb_new <-
+    tb %>%
+    mutate(cluster_merge = cluster_lookup_vec[as.character(cluster_merge)])
+
+  names(tb_new$cluster_merge) <- NULL
+  names(tb$cluster_merge) <- NULL
+
+  if(identical(tb, tb_new)){
+    tb_new
+  } else{
+    cluster_lookup(tb_new)
+  }
+}
+
+merge_clusters <- function(df_cluster){
+  cluster_lookup <-
+    df_cluster %>%
+    select(cluster_id, cluster_merge) %>%
+    cluster_lookup()
+
+  df_cluster <-
+    df_cluster %>%
+    select(-cluster_merge) %>%
+    left_join(cluster_lookup, by = "cluster_id") %>%
+    mutate(cluster_id = cluster_merge) %>%
+    select(-cluster_merge) %>%
+    group_by(cluster_id) %>%
+    mutate(cluster_density = max(cluster_density)) %>%
+    ungroup()
+  names(df_cluster$sequence) <- df_cluster$id
+
+  df_cluster
+}
+
 
 
 cluster_knn <- function(df_aggregated, k) {
   # message("------------Clustering------------")
-  stopifnot(class(df_aggregated) == "Aggregated_Dataframe")
+  stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))
 
   df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
 
@@ -56,6 +96,7 @@ cluster_knn <- function(df_aggregated, k) {
   message("Initializing clusters...")
   df_cluster <-
     df_sequence %>%
+    select(-sequence_formatted) %>%
     mutate(density_info = calculate_density_info(distance_matrix,k),
            sequence_density = map_dbl(density_info, "density"),
            cluster_id = row_number(),
@@ -77,6 +118,7 @@ cluster_knn <- function(df_aggregated, k) {
 
   #step 2 - clustering based on criteria
   message("Clustering based on density...")
+  df_cluster <-
   df_cluster %>%
     mutate(cluster_merge = cluster_id,
            cluster_merge =
@@ -98,66 +140,60 @@ cluster_knn <- function(df_aggregated, k) {
                       })
            )
 
+  df_cluster <- merge_clusters(df_cluster)
 
-
-
-
-  for(i in 1:length(sequences)) {
-    (current_cluster <- cluster_info$cluster[i])
-    (cluster_to_merge <- as.integer(cluster_info %>%
-                                      dplyr::rename(id_new = id,density_array_new = density_array) %>%
-                                      mutate(distances = distance_matrix[i,]) %>%
-                                      filter(density_info[[i]]$NearestSequences) %>%
-                                      filter(density_array_new > density_array[i]) %>%
-                                      filter(cluster != current_cluster) %>%
-                                      arrange(distances) %>%
-                                      slice(1) %>% select(cluster)))
-
-    if(!is.na(cluster_to_merge)) {
-      cluster_info[cluster_info$cluster == current_cluster,]$cluster <- cluster_to_merge
-      cluster_info[cluster_info$cluster == cluster_to_merge,]$cluster_density <- max(cluster_info[cluster_info$cluster == cluster_to_merge,]$cluster_density)
-    }
-  }
-
-
-
-  # print(length(unique(cluster_info$cluster)))
-  # print(table(cluster_info$cluster))
-  #
   #step 3
   message("Resolving ties...")
-  for(i in 1:length(sequences)) {
-    (current_cluster <- cluster_info$cluster[i])
-    (current_cluster_density <- cluster_info$cluster_density[i])
-    current_sequence_density <- cluster_info$density_array[i]
-    nearest_neighbours <- cluster_info %>%
-      dplyr::rename(id_new = id,density_array_new = density_array) %>%
-      filter(density_info[[i]]$NearestSequences) %>%
-      filter(cluster != current_cluster)
-    neighbour_density_check <- nearest_neighbours %>% filter(density_array_new > current_sequence_density) %>% nrow()
+  df_cluster <-
+    df_cluster %>%
+    mutate(cluster_merge = cluster_id,
+           cluster_merge =
+             pmap_int(list(density_info, cluster_id, cluster_density),
+                      function(sequence_density_info, current_cluster, current_cluster_density){
+                        density <- sequence_density_info$density
+                        distances <- sequence_density_info$distances
 
-    if(!neighbour_density_check) {
-      cluster_to_merge <- as.integer(nearest_neighbours %>%
-                                       filter(near(density_array_new,current_sequence_density,0.1)) %>%
-                                       filter(cluster_density > current_cluster_density) %>%
-                                       arrange(desc(cluster_density)) %>% slice(1) %>%
-                                       select(cluster))
-      #filter(near(density_array_new,density_array[i],0.001)) %>%
-      if(!is.na(cluster_to_merge)) {
-        cluster_info[cluster_info$cluster == current_cluster,]$cluster <- cluster_to_merge
-        cluster_info[cluster_info$cluster == cluster_to_merge,]$cluster_density <- max(cluster_info[cluster_info$cluster == cluster_to_merge,]$cluster_density)
-      }
-    }
-  }
+                        checks <- (sequence_density_info$nearest_neighbours) &
+                          (df_cluster$sequence_density == density) &
+                          (df_cluster$cluster_id != current_cluster) &
+                          (df_cluster$cluster_density > current_cluster_density)
 
-  cluster2 <- cluster <- cluster_info$cluster
-  cluster_unique = unique(cluster)
-  for(cl in 1:length(cluster_unique)) {
-    cluster2[cluster==cluster_unique[cl]] = cl
-  }
-  cluster_info$cluster <- cluster2
+                        if(sum(checks) != 0){
+                          candidate_clusters <- df_cluster$cluster_id[checks]
+                          candidate_clusters[order(distances[checks])][1]
+                        } else {
+                          current_cluster
+                        }
 
-  res = data.frame("ID" = cluster_info$id , "Density" = cluster_info$density_array, "Cluster" = cluster_info$cluster, "ClusterDensity" = round(cluster_info$cluster_density,2))
+                      })
+    )
+
+
+  df_cluster <- merge_clusters(df_cluster)
+
+  df_cluster <-
+    df_cluster %>%
+      group_by(cluster_id) %>%
+      arrange(desc(sequence_density)) %>%
+      select(-sequence_density,
+             -density_info,
+             -cluster_density,
+             cluster = cluster_id) %>%
+      nest(.key = df_sequences) %>%
+      mutate(n = map_int(df_sequences, nrow),
+             df_sequences =
+               map(df_sequences,
+                   function(df_sequence){
+                     class(df_sequence$sequence) <-
+                       c("Sequence_List",class(df_sequence$sequence))
+                     df_sequence
+                   })) %>%
+      arrange(desc(n)) %>%
+      mutate(cluster = row_number())
+
+  class(df_cluster) <- c("Clustered_Dataframe", class(df_cluster))
+
   message("----------Done Clustering----------")
-  return(res)
+
+  df_cluster
 }

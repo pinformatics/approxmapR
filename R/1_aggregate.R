@@ -197,8 +197,8 @@ print.Sequence <- function(sequence){
 
 print.Sequence_List <- function(sequences){
   # print(sequences)
-  walk2(sequences, names(sequences), function(sequence, id){
-      cat(id,": ", format_sequence(sequence), "\n")
+  walk2(sequences, names(sequences), function(sequence_obj, id){
+      cat(id,": ", format_sequence(sequence_obj), "\n")
     })
 }
 

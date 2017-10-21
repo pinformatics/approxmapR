@@ -4,88 +4,63 @@ get_weighted_sequence <- function(x, ...){
 
 get_weighted_sequence.Sequence <- function(sequence_1, sequence_2) {
 
-  weighted_sequence <- list(length(sequence_1))
-
-  for(i in 1:length(sequence_1)) {
-    all_elements <- c(sequence_1[[i]],sequence_2[[i]])
-    elements <- union(sequence_1[[i]],sequence_2[[i]])
-    elements <- elements[elements != "_"]
-
-    element_weights <- numeric(length(elements))
-    for(j in 1:length(elements)) {
-      element_weights[j] <- sum(all_elements==elements[j])
-    }
-
-    if(("_" %in% sequence_1[[i]])|("_" %in% sequence_2[[i]])) {
-      itemset_weight <- 1
-    } else {
-      itemset_weight <- 2
-    }
-    weighted_sequence[[i]] <- list(elements = elements,
-                                  element_weights = element_weights,
-                                  itemset_weight = itemset_weight)
-    class(weighted_sequence[[i]]) <- c("W_Sequence_Itemset", class(weighted_sequence[[i]]))
-  }
-
-  attr(weighted_sequence, "n") <- 2
-  class(weighted_sequence) <- "W_Sequence"
-
-  weighted_sequence
+  w_sequence <-
+    map2(sequence_1, sequence_2,
+         function(sequence_itemset_1, sequence_itemset_2){
+           w_sequence_itemset = list()
+           elements <- c(sequence_itemset_1, sequence_itemset_2)
+           elements <- elements[elements != "_"]
+           freq_tbl <-
+             elements %>%
+              table()
+           w_sequence_itemset$elements <- names(freq_tbl)
+           w_sequence_itemset$element_weights <- unname(freq_tbl)
+           if(("_" %in% sequence_itemset_1)|("_" %in% sequence_itemset_2)) {
+             w_sequence_itemset$itemset_weight <- 1
+           } else {
+             w_sequence_itemset$itemset_weight <- 2
+           }
+           class_it(w_sequence_itemset, "W_Sequence_Itemset")
+         })
+  attr(w_sequence, "n") <- 2
+  class_it(w_sequence, "W_Sequence")
 }
 
 get_weighted_sequence.W_Sequence <- function(w_sequence, sequence) {
 
   n <- attr(w_sequence,"n")
+  x <- F
+  w_sequence_new <-
+    map2(w_sequence, sequence,
+         function(w_sequence_itemset, sequence_itemset){
+             if("_" %in% sequence_itemset) {
+               x <- T
+               class_it(w_sequence_itemset, "W_Sequence_Itemset")
 
-  for(i in 1:length(w_sequence)) {
-    w_sequence_itemset <- w_sequence[[i]]
-    itemset <- sequence[[i]]
-    if("_" %in% itemset) {
-      next
+             } else if("_" %in% w_sequence_itemset$elements) {
+               x <- T
+               freq_tb <- table(sequence_itemset)
+               w_sequence_itemset$elements <- names(freq_tb)
+               w_sequence_itemset$element_weights <- unname(freq_tb)
+               w_sequence_itemset$itemset_weight <- 1
+               class_it(w_sequence_itemset, "W_Sequence_Itemset")
+             } else {
 
-    } else if("_" %in% w_sequence_itemset$elements) {
+               freq_tb <-
+                 rep(w_sequence_itemset$elements, w_sequence_itemset$element_weights) %>%
+                   c(sequence_itemset) %>%
+                     table()
 
-      w_sequence[[i]]$elements <- unique(itemset)
-      for(j in 1:length(w_sequence[[i]]$elements)) {
-        w_sequence[[i]]$element_weights[j] <- sum(w_sequence[[i]]$elements[j]==itemset)
-      }
-      w_sequence[[i]]$itemset_weight <- 1
-
-    } else {
-
-      all_elements <- NULL
-      for(j in 1:length(w_sequence_itemset$elements)) {
-        all_elements <- c(all_elements,rep(w_sequence_itemset$elements[j],w_sequence_itemset$element_weights[j]))
-      }
-
-      all_elements <- c(itemset,all_elements)
-      unique_elements <- unique(all_elements)
-
-      w_sequence[[i]]$elements <- unique_elements
-      w_sequence[[i]]$element_weights <- NULL
-
-      for(j in 1:length(w_sequence[[i]]$elements)) {
-        w_sequence[[i]]$element_weights[j] <- sum(w_sequence[[i]]$elements[j]==all_elements)
-      }
-
-      w_sequence[[i]]$itemset_weight <- w_sequence_itemset$itemset_weight + 1
-
-    }
-  }
-
-  w_sequence <-
-    map(w_sequence, function(w_sequence_itemset){
-      if(!("W_Sequence_Itemset" %in% class(w_sequence_itemset))){
-        class(w_sequence_itemset) <- c("W_Sequence_Itemset", class(w_sequence_itemset))
-      }
-      w_sequence_itemset
-    })
-
-  attr(w_sequence,"n") <- n + 1
-  class(w_sequence) <- c("W_Sequence", class(w_sequence))
+               w_sequence_itemset$elements <- names(freq_tb)
+               w_sequence_itemset$element_weights <- unname(freq_tb)
+               w_sequence_itemset$itemset_weight <- w_sequence_itemset$itemset_weight + 1
+               class_it(w_sequence_itemset, "W_Sequence_Itemset")
+             }
+         })
 
 
-  w_sequence
+  attr(w_sequence_new,"n") <- n + 1
+  class_it(w_sequence_new, "W_Sequence")
 }
 
 
@@ -137,7 +112,11 @@ get_weighted_sequence.Clustered_Dataframe <- function(df_clusters,
                                                       fun = sorenson_distance){
   df_clusters <-
     df_clusters %>%
-      mutate(weighted_sequence = map(df_list, get_weighted_sequence, fun))
+      mutate(weighted_sequence =
+               map(df_sequences, function(df_sequence){
+                 get_weighted_sequence(df_sequence$sequence, fun)
+               }
+             ))
 
   class(df_clusters$weighted_sequence) <-
     c("W_Sequence_List",
@@ -175,13 +154,13 @@ align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_dist
       #is left plus cost?
       if (distance_matrix[i,j]==distance_matrix[i,j-1] + 1)  {
         #left
-        aligned_sequence_1 <- append(aligned_sequence_1, "_", 0)
+        aligned_sequence_1 <- append(aligned_sequence_1, class_it("_","Sequence_Itemset"), 0)
         aligned_sequence_2 <- append(aligned_sequence_2, sequence_2[j-1][1], 0)
         backtrack(i, j - 1, aligned_sequence_1, aligned_sequence_2, operations)
 
       } else if (distance_matrix[i,j]==distance_matrix[i-1,j]+1) {
         #is up plus cost
-        aligned_sequence_2 <- append(aligned_sequence_2, "_", 0)
+        aligned_sequence_2 <- append(aligned_sequence_2, class_it("_","Sequence_Itemset"), 0)
         aligned_sequence_1 <- append(aligned_sequence_1, sequence_1[i-1][1], 0)
         backtrack(i - 1, j, aligned_sequence_1, aligned_sequence_2, operations)
 
@@ -194,13 +173,13 @@ align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_dist
       }
     } else if ((i==1) & (j>1)) {
 
-      aligned_sequence_1 <- append(aligned_sequence_1, "_", 0)
+      aligned_sequence_1 <- append(aligned_sequence_1, class_it("_","Sequence_Itemset"), 0)
       aligned_sequence_2 <- append(aligned_sequence_2, sequence_2[j-1][1], 0)
       backtrack(i, j - 1, aligned_sequence_1, aligned_sequence_2, operations)
 
     } else if((j==1) & (i>1)) {
 
-      aligned_sequence_2 <- append(aligned_sequence_2, "_", 0)
+      aligned_sequence_2 <- append(aligned_sequence_2, class_it("_","Sequence_Itemset"), 0)
       aligned_sequence_1 <- append(aligned_sequence_1, sequence_1[i-1][1], 0)
       backtrack(i - 1, j, aligned_sequence_1, aligned_sequence_2, operations)
 
@@ -213,23 +192,16 @@ align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_dist
     get_weighted_sequence(aligned_sequences$aligned_sequence_1,
                           aligned_sequences$aligned_sequence_2)
 
-  # weighted_sequence <-
-  #   map(weighted_sequence, function(w_sequence_itemset){
-  #     if(!("W_Sequence_Itemset" %in% class(w_sequence_itemset))){
-  #       class(w_sequence_itemset) <- c(W_Sequence_Itemset, class(w_sequence_itemset))
-  #     }
-  #     w_sequence_itemset
-  #   })
-
   w_sequence
 
 }
 
 insert_blank_w_itemset <- function(w_sequence) {
-  w_sequence_itemset <- list(list(elements = "_",
+  blank_w_itemset <- class_it(list(list(elements = "_",
                                   element_weights = 0,
-                                  itemset_weight = 0))
-  append(w_sequence, w_sequence_itemset,0)
+                                  itemset_weight = 0)), "W_Sequence_Itemset")
+
+  append(w_sequence, blank_w_itemset, 0)
 }
 
 
@@ -263,13 +235,13 @@ align_sequences.W_Sequence <- function(w_sequence,
       if(distance_matrix[i,j] == (distance_matrix[i-1,j-1] + h)) {
 
         aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
-        aligned_w_sequence <- append(w_sequence[j-1][1], aligned_w_sequence, 0)
+        aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
         backtrack(i - 1, j - 1, aligned_sequence, aligned_w_sequence, operations)
 
       } else if (distance_matrix[i,j] == distance_matrix[i, j-1] + 1)  {
 
         #is left plus cost?
-        aligned_sequence <- append(aligned_sequence, "_", 0)
+        aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
         backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, operations)
 
@@ -290,7 +262,7 @@ align_sequences.W_Sequence <- function(w_sequence,
       }
     } else if ((i==1) & (j>1)) {
 
-      aligned_sequence <- append(aligned_sequence, "_", 0)
+      aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
       aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
       backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, operations)
 
@@ -302,7 +274,7 @@ align_sequences.W_Sequence <- function(w_sequence,
 
     }
   }
-  #debug(backtrack)
+  # debug(backtrack)
   aligned_sequences <- backtrack(i, j, aligned_sequence, aligned_w_sequence)
 
   # message(get_weighted_sequence(aligned_sequences$aligned_w_sequence,
