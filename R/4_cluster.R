@@ -80,20 +80,53 @@ merge_clusters <- function(df_cluster){
   df_cluster
 }
 
+# x <- function(){
+#   $xyz <- 2
+# }
 
 
-cluster_knn <- function(df_aggregated, k) {
+
+cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
   # message("------------Clustering------------")
   stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))
 
-  df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+  message("Clustering...")
 
-  message("Calculating distance matrix...")
-  distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
+  if(exists("env_dm", envir = globalenv()) &&
+     identical(.GlobalEnv$env_dm$df_aggregated, df_aggregated)) {
+    if(use_cache){
+        message("Using cached distance matrix...")
+        df_sequence <-  .GlobalEnv$env_dm$df_sequence
+        distance_matrix <- .GlobalEnv$env_dm$distance_matrix
+    } else{
+      rm(env_dm)
+      df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+      message("Calculating distance matrix...")
+      distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
+    }
+  } else{
+    if(use_cache){
+      .GlobalEnv$env_dm <- new.env()
+
+      df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+      message("Calculating distance matrix...")
+      distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
+
+      .GlobalEnv$env_dm$df_aggregated <- df_aggregated
+      .GlobalEnv$env_dm$df_sequence <- df_sequence
+      .GlobalEnv$env_dm$distance_matrix <- distance_matrix
+
+      message("Caching distance matrix...")
+    } else{
+      df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+      message("Calculating distance matrix...")
+      distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
+    }
+  }
 
 
   #step 1 - initialize every *unique* sequence as a cluster
-  message("Initializing clusters...")
+  # message("Initializing clusters...")
   df_cluster <-
     df_sequence %>%
     select(-sequence_formatted) %>%
@@ -116,8 +149,8 @@ cluster_knn <- function(df_aggregated, k) {
       select(-same_sequence_clusters)
 
 
-  #step 2 - clustering based on criteria
-  message("Clustering based on density...")
+  # step 2 - clustering based on criteria
+  # message("Clustering based on density...")
   df_cluster <-
   df_cluster %>%
     mutate(cluster_merge = cluster_id,
@@ -143,7 +176,7 @@ cluster_knn <- function(df_aggregated, k) {
   df_cluster <- merge_clusters(df_cluster)
 
   #step 3
-  message("Resolving ties...")
+  # message("Resolving ties...")
   df_cluster <-
     df_cluster %>%
     mutate(cluster_merge = cluster_id,
@@ -193,7 +226,7 @@ cluster_knn <- function(df_aggregated, k) {
 
   class(df_cluster) <- c("Clustered_Dataframe", class(df_cluster))
 
-  message("----------Done Clustering----------")
+  # message("----------Done Clustering----------")
 
   df_cluster
 }

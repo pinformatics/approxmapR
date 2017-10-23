@@ -15,15 +15,27 @@ df %>%
   mutate(period = readr::parse_date(period, format = "%d %b %y") %>%
     as.character())
 
-x <-
-df %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 3) %>%
-  cluster_knn(k = 20)
 
-x %>%
-  filter_pattern() %>%
+df %>%
+  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%
+  cluster_knn(k = 50, use_cache = T)
+
+df %>%
+  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%
+  cluster_knn(k = 15, use_cache = T)
+
+df %>%
+  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 2) %>%
+  cluster_knn(k = 25, use_cache = T)
+
+
+y <- x %>%
+  get_weighted_sequence()
+
+y %>%
+  filter_pattern(threshold = 0.3, pattern_name = "signal") %>%
   format_sequence() %>%
-  View()
+    View()
 
 y <- x %>%
   filter_pattern(threshold = 0.6) %>%
@@ -69,7 +81,9 @@ get_weighted_sequence(y)
 
 
 
-
+pre_agg_full %>%
+  pre_aggregated() %>%
+  cluster_knn(k = 4, use_cache = T)
 
 
 
