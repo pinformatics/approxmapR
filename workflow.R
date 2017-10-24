@@ -1,10 +1,12 @@
 library(tidyverse)
-library(TraMineR)
+# library(TraMineR)
 library(stringr)
 library(lubridate)
 
 data("mvad")
 df <- as_tibble(mvad)
+
+mvad <- df
 
 df <-
 df %>%
@@ -15,86 +17,146 @@ df %>%
   mutate(period = readr::parse_date(period, format = "%d %b %y") %>%
     as.character())
 
+k <- 1:50
 
-df %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%
-  cluster_knn(k = 50, use_cache = T)
+agg_df <-
+  df %>%
+    aggregate_sequences(format = "%Y-%m-%d", unit = "day", n_units = 1)
 
-df %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%
-  cluster_knn(k = 15, use_cache = T)
+k_vals <-
+tibble(k = k) %>%
+  mutate(cluster_ws = map(k, function(k){
+    agg_df %>%
+      cluster_knn(k = k) %>%
+        filter_pattern(threshold = 0.4)
+  }))
 
-df %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 2) %>%
-  cluster_knn(k = 25, use_cache = T)
+agg_seqs <-
+mvad %>%
+  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 6) %>%
+    cluster_knn(k = 15)
+
+aggs_aligned <-
+agg_seqs %>%
+  filter_pattern(threshold = 0.7, pattern_name = "consensus")
+
+aggs_aligned %>%
+  pull(consensus_pattern) %>%
+  .[[1]] %>%
+  unclass()
+
+aggs_aligned %>%
+  format_sequence(truncate_patterns = TRUE) %>%
+  View()
+
+# write_csv("~/seqs.csv")
+
+#
+# %>%
+#   format_sequence(compare = T) %>%
+#   View()
 
 
-y <- x %>%
-  get_weighted_sequence()
+k_vals <-
+k_vals %>%
+  mutate(num_clusters = map_int(cluster_ws, ~nrow(.)))
 
-y %>%
-  filter_pattern(threshold = 0.3, pattern_name = "signal") %>%
-  format_sequence() %>%
-    View()
+k_vals %>%
+  filter(between(num_clusters, 5, 10))
 
-y <- x %>%
-  filter_pattern(threshold = 0.6) %>%
-    format_sequence()
+k_vals %>%
+  filter(k == 28) %>%
+    pull(cluster_ws) %>% .[[1]] %>%
+      format_sequence() %>%
+  View()
 
-x %>%
-  get_weighted_sequence()
-
-y$consensus_pattern
-
-
-res <-
-pre_agg_full %>%
-  pre_aggregated() %>%
-    cluster_knn(k = 4) %>%
-      get_weighted_sequence()
-
-res <-
-res %>%
-  mutate(weighted_sequence =
-           map(weighted_sequence, function(x){
-             class_it(x,"W_Sequence")
-           }))
-
-class(res$weighted_sequence) <- c("W_Sequence_List", class(res$weighted_sequence))
-res <- class_it(res, "W_Sequence_Dataframe")
-res %>% filter_pattern() %>%
-  format_sequence(compare = T, n_as_percent = F) %>%
-    View()
-
-x <- pre_agg_test %>%
-  pre_aggregated() %>%
-  cluster_knn(k = 2) %>%
-    .$df_sequences %>%
-      .[[1]]
-x <- x[c(1,3,2,5,4,6,7),]
-y <- x$sequence
-names(y) <- x$id
-class(y) <- c("Sequence_List",class(y))
-get_weighted_sequence(y)
+k_vals %>%
+    ggplot(aes(k, num_clusters)) +
+    geom_line()
 
 
 
-
-
-pre_agg_full %>%
-  pre_aggregated() %>%
-  cluster_knn(k = 4, use_cache = T)
-
-
-
-
-
-
-
-
-
-
-
+# df %>%
+#   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%
+#   cluster_knn(k = 50, use_cache = T) %>%
+#   filter_pattern(threshold = 0.5) %>%
+#     format_sequence()
+#
+# df %>%
+#   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%
+#   cluster_knn(k = 15, use_cache = T)
+#
+# df %>%
+#   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 2) %>%
+#   cluster_knn(k = 25, use_cache = T)
+#
+#
+# y <- x %>%
+#   get_weighted_sequence()
+#
+# y %>%
+#   filter_pattern(threshold = 0.3, pattern_name = "signal") %>%
+#   format_sequence() %>%
+#     View()
+#
+# y <- x %>%
+#   filter_pattern(threshold = 0.6) %>%
+#     format_sequence()
+#
+# x %>%
+#   get_weighted_sequence()
+#
+# y$consensus_pattern
+#
+#
+# res <-
+# pre_agg_full %>%
+#   pre_aggregated() %>%
+#     cluster_knn(k = 4) %>%
+#       get_weighted_sequence()
+#
+# res <-
+# res %>%
+#   mutate(weighted_sequence =
+#            map(weighted_sequence, function(x){
+#              class_it(x,"W_Sequence")
+#            }))
+#
+# class(res$weighted_sequence) <- c("W_Sequence_List", class(res$weighted_sequence))
+# res <- class_it(res, "W_Sequence_Dataframe")
+# res %>% filter_pattern() %>%
+#   format_sequence(compare = T, n_as_percent = F) %>%
+#     View()
+#
+# x <- pre_agg_test %>%
+#   pre_aggregated() %>%
+#   cluster_knn(k = 2) %>%
+#     .$df_sequences %>%
+#       .[[1]]
+# x <- x[c(1,3,2,5,4,6,7),]
+# y <- x$sequence
+# names(y) <- x$id
+# class(y) <- c("Sequence_List",class(y))
+# get_weighted_sequence(y)
+#
+#
+#
+#
+#
+# pre_agg_full %>%
+#   pre_aggregated() %>%
+#   cluster_knn(k = 4, use_cache = T)
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 
 
 

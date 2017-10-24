@@ -1,32 +1,32 @@
-#dummy clustering
-
-cluster_knn_api <- function(df){
-  set.seed(1)
-  ids <- unique(df$id)
-  clust <- sample(1:3, length(ids), replace = T)
-  density <- abs(rnorm(length(ids), 1, 3))
-  cluster_info <- tibble(id = ids, cluster = clust, density = density)
-  df_clustered <-
-    df %>%
-    left_join(cluster_info, by = "id") %>%
-    group_by(cluster) %>%
-    arrange(density,id) %>%
-    nest(-density, .key = df_list) %>%
-    mutate(n = map_int(df_list, nrow),
-           df_list = map(df_list,
-                         function(df_group){
-                           if("Aggregated_Dataframe" %in% class(df)){
-                             class(df_group) <- class(df)
-                           }
-                           df_group
-                         })
-    ) %>%
-    arrange(desc(n)) %>%
-    mutate(cluster = row_number())
-  class(df_clustered) <- c("Clustered_Dataframe", class(df_clustered))
-
-  df_clustered
-}
+# #dummy clustering
+#
+# cluster_knn_api <- function(df){
+#   set.seed(1)
+#   ids <- unique(df$id)
+#   clust <- sample(1:3, length(ids), replace = T)
+#   density <- abs(rnorm(length(ids), 1, 3))
+#   cluster_info <- tibble(id = ids, cluster = clust, density = density)
+#   df_clustered <-
+#     df %>%
+#     left_join(cluster_info, by = "id") %>%
+#     group_by(cluster) %>%
+#     arrange(density,id) %>%
+#     nest(-density, .key = df_list) %>%
+#     mutate(n = map_int(df_list, nrow),
+#            df_list = map(df_list,
+#                          function(df_group){
+#                            if("Aggregated_Dataframe" %in% class(df)){
+#                              class(df_group) <- class(df)
+#                            }
+#                            df_group
+#                          })
+#     ) %>%
+#     arrange(desc(n)) %>%
+#     mutate(cluster = row_number())
+#   class(df_clustered) <- c("Clustered_Dataframe", class(df_clustered))
+#
+#   df_clustered
+# }
 
 calculate_density_info <- function(distance_matrix, k) {
   apply(distance_matrix, 2, function(distances){
@@ -126,7 +126,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
   #step 1 - initialize every *unique* sequence as a cluster
-  # message("Initializing clusters...")
+  message("Initializing clusters...")
   df_cluster <-
     df_sequence %>%
     select(-sequence_formatted) %>%
@@ -150,7 +150,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
   # step 2 - clustering based on criteria
-  # message("Clustering based on density...")
+  message("Clustering based on density...")
   df_cluster <-
   df_cluster %>%
     mutate(cluster_merge = cluster_id,
@@ -176,7 +176,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
   df_cluster <- merge_clusters(df_cluster)
 
   #step 3
-  # message("Resolving ties...")
+  message("Resolving ties...")
   df_cluster <-
     df_cluster %>%
     mutate(cluster_merge = cluster_id,
@@ -226,7 +226,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
   class(df_cluster) <- c("Clustered_Dataframe", class(df_cluster))
 
-  # message("----------Done Clustering----------")
+  message("----------Done Clustering----------")
 
   df_cluster
 }

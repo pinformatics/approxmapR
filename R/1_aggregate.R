@@ -13,7 +13,7 @@ get_n_days <- function(unit,n_units) {
   lubridate::ddays(n_days)
 }
 
-pre_aggregated <- function(df){
+pre_aggregated <- function(df, summary_stats = TRUE){
   if(!(all(names(df) == c("id", "period", "event")))) {
     stop("There should be 3 columns named id, period and event (all lower case).")
   }
@@ -27,8 +27,10 @@ pre_aggregated <- function(df){
 
 
   class(df) <- c("Aggregated_Dataframe", "tbl_df", "tbl", "data.frame")
-  message("Generating summary statistics of aggregated data...")
-  generate_summary_stats(df)
+  if(summary_stats){
+    message("Generating summary statistics of aggregated data...")
+    generate_summary_stats(aggregated_data)
+  }
   df
 }
 
@@ -42,7 +44,8 @@ aggregate_sequences <- function(unaggregated_data,
                      base_date = NA,
                      occurence = min,
                      multiset = FALSE,
-                     include_date = FALSE) {
+                     include_date = FALSE,
+                     summary_stats = TRUE) {
 
   n_days <- get_n_days(unit,n_units)
 
@@ -119,7 +122,7 @@ aggregate_sequences <- function(unaggregated_data,
   if(!multiset){
     aggregated_data <-
       aggregated_data %>%
-      group_by(id,event) %>%
+      group_by(id,agg_period,event) %>%
       slice(1)
   }
 
@@ -138,8 +141,10 @@ aggregate_sequences <- function(unaggregated_data,
   }
 
   class(aggregated_data) <- c("Aggregated_Dataframe", class(aggregated_data))
-  message("Generating summary statistics of aggregated data...")
-  generate_summary_stats(aggregated_data)
+  if(summary_stats){
+    message("Generating summary statistics of aggregated data...")
+    generate_summary_stats(aggregated_data)
+  }
 
   aggregated_data
 }

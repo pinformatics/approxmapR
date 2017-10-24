@@ -21,9 +21,15 @@ filter_pattern.W_Sequence_Dataframe <- function(df_w_sequences, pattern_name = "
 
   df_pattern <-
     df_w_sequences %>%
-    mutate(!!pattern := structure(map(weighted_sequence, filter_pattern, ... = ...),
-                                  class = "W_Sequence_List")) %>%
-    select(cluster, n, !!pattern, everything())
+    mutate(pat_name = structure(map(weighted_sequence, filter_pattern, ... = ...),
+                                  class = c("W_Sequence_List")))
+
+  df_pattern$pat_name = class_it(df_pattern$pat_name, "W_Sequence_Pattern_List")
+
+  df_pattern <-
+    df_pattern %>%
+    mutate(!!pattern := pat_name) %>%
+    select(-pat_name, cluster, n, !!pattern, everything())
 
   class(df_pattern) <- class(df_w_sequences)
 
@@ -60,9 +66,11 @@ filter_pattern.W_Sequence <- function(w_sequence,
         w_sequence_itemset$elements <- ""
         w_sequence_itemset$element_weights <- 0
       } else if(sum(threshold_check) == 0){
-        w_sequence_itemset$elements <- NULL
-        w_sequence_itemset$element_weights <- NULL
-        w_sequence_itemset$itemset_weight <- NULL
+        # w_sequence_itemset$elements <- NULL
+        # w_sequence_itemset$element_weights <- NULL
+        # w_sequence_itemset$itemset_weight <- NULL
+
+        w_sequence_itemset <- NULL
       } else {
          w_sequence_itemset$elements <- w_sequence_itemset$elements[threshold_check]
          w_sequence_itemset$element_weights <- w_sequence_itemset$element_weights[threshold_check]
@@ -71,17 +79,49 @@ filter_pattern.W_Sequence <- function(w_sequence,
       w_sequence_itemset
     })
 
-  class(pattern) <- c("W_Sequence",  class(pattern))
+  pattern <- pattern[map_lgl(pattern,~!is.null(.))]
 
-  if(!is.null(pattern_name)){
-    class(pattern) <- c(paste0(pattern_name,"_Pattern"),  class(pattern))
-  }
 
   attr(pattern, "n") <- n
 
-  pattern
+  pattern <- class_it(pattern, "W_Sequence")
+  class_it(pattern, "W_Sequence_Pattern")
 
 }
 
+format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern){
+  w_sequence_pattern %>%
+    map_chr(function(w_itemset){
+      if(length(w_itemset$elements) > 0){
+        str_c(w_itemset$elements, collapse = ", ") %>%
+          paste0("(", ., ")")
+      }
+      else{
+        NA
+      }
 
+    }) %>%
+    .[!is.na(.)] %>%
+    str_c(collapse = " ")
+}
+
+
+
+
+format_sequence.W_Sequence_Pattern_List <- function(w_sequence_pattern_list){
+  map_chr(w_sequence_pattern_list, function(w_sequence_pattern){
+    format_sequence(w_sequence_pattern)
+  })
+}
+
+print.W_Sequence_Pattern <- function(w_sequence_pattern, ...){
+  format_sequence(w_sequence_pattern) %>%
+    cat()
+}
+
+print.W_Sequence_Pattern_List <- function(w_sequence_pattern_list, ...){
+  walk(w_sequence_pattern_list, function(w_sequence_pattern){
+    cat(format_sequence(w_sequence_pattern), "\n")
+  })
+}
 

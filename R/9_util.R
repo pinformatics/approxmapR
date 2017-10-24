@@ -1,16 +1,21 @@
-format_sequence.W_Sequence_Dataframe <- function(df, compare = FALSE, n_as_percent = TRUE){
-  columns <- c(names(df)[str_detect(names(df),"_pattern")], "weighted_sequence")
+format_sequence.W_Sequence_Dataframe <- function(df, compare = FALSE, truncate_patterns = FALSE){
+
+  column_patterns <- names(df)[str_detect(names(df),"_pattern")]
+  columns <- c(column_patterns, "weighted_sequence")
+
+  if(truncate_patterns){
+    df <-
+      df %>%
+      mutate_at(column_patterns, truncate_pattern)
+  }
 
   df <-
     df %>%
       select(one_of("cluster", "n", columns)) %>%
       mutate_at(columns, format_sequence) %>%
       mutate(n = as.double(n),
-             n = if_else(rep(n_as_percent, nrow(df)),
-                         round(n/sum(n) * 100, digits = 2),
-                         n)
-             )
-
+             n_percent = str_c(round(n/sum(n) * 100, digits = 2),"%")) %>%
+    select(one_of("cluster", "n", "n_percent", columns))
 
    if(compare){
     compare_sequences(df)
@@ -22,7 +27,7 @@ format_sequence.W_Sequence_Dataframe <- function(df, compare = FALSE, n_as_perce
 
 compare_sequences <- function(df){
   df %>%
-    gather(-cluster,-n, key = "pattern", value = "w_sequence") %>%
+    gather(-cluster, -n, -n_percent, key = "pattern", value = "w_sequence") %>%
       arrange(cluster)
 }
 
@@ -78,5 +83,27 @@ class_it <- function(obj, class_name){
   class(obj) <- c(class_name, class(obj)) %>%
     unique()
   obj
+}
+
+truncate_pattern <- function(x, ...){
+  UseMethod("truncate_pattern")
+}
+
+truncate_pattern.W_Sequence_Pattern_List <- function(w_sequence_list){
+  class_it(map(w_sequence_list, truncate_pattern), "W_Sequence_List")
+}
+
+truncate_pattern.W_Sequence_Pattern <- function(w_sequence){
+  truncate_index <- rep(FALSE, length(w_sequence))
+  for(i in seq_along(w_sequence)){
+    if(i == length(w_sequence)) break()
+    e_1 <- sort(w_sequence[[i]]$elements)
+    e_2 <- sort(w_sequence[[i + 1]]$elements)
+    if(identical(e_1, e_2)){
+      truncate_index[i] <- TRUE
+    }
+  }
+  w_sequence[truncate_index] <- NULL
+  w_sequence
 }
 
