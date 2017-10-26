@@ -29,7 +29,7 @@ filter_pattern.W_Sequence_Dataframe <- function(df_w_sequences, pattern_name = "
   df_pattern <-
     df_pattern %>%
     mutate(!!pattern := pat_name) %>%
-    select(-pat_name, cluster, n, !!pattern, everything())
+    select(cluster, n, !!pattern, everything(), -pat_name)
 
   class(df_pattern) <- class(df_w_sequences)
 
@@ -89,8 +89,36 @@ filter_pattern.W_Sequence <- function(w_sequence,
 
 }
 
-format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern){
-  w_sequence_pattern %>%
+format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern, html_format = FALSE){
+
+  n <- attr(w_sequence_pattern, "n")
+
+  if(html_format){
+    cuts <- floor(n*seq(0,1,0.2))[2:5]
+    w_sequence_pattern %>%
+      map_chr(function(w_itemset){
+        tibble(element = as.character(w_itemset$elements),
+               weight = as.integer(w_itemset$element_weights)) %>%
+          mutate(
+            otag =
+              case_when(
+                weight > cuts[4] ~ "<priority1>",
+                between(weight, cuts[3], cuts[4]) ~ "<priority2>",
+                between(weight, cuts[2], cuts[3]) ~ "<priority3>",
+                between(weight, cuts[1], cuts[2]) ~ "<priority4>",
+                TRUE ~ "<priority5>"
+              ),
+            ctag = stringr::str_replace(otag,"<","</"),
+            element_html = str_c(otag, element, ctag)) %>%
+          pull(element_html) %>%
+          str_c(collapse = ", ") %>%
+          paste0("(", ., ")")
+      }) %>%
+      str_c(collapse = " ")
+
+  } else{
+
+    w_sequence_pattern %>%
     map_chr(function(w_itemset){
       if(length(w_itemset$elements) > 0){
         str_c(w_itemset$elements, collapse = ", ") %>%
@@ -103,14 +131,15 @@ format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern){
     }) %>%
     .[!is.na(.)] %>%
     str_c(collapse = " ")
+  }
 }
 
 
 
 
-format_sequence.W_Sequence_Pattern_List <- function(w_sequence_pattern_list){
+format_sequence.W_Sequence_Pattern_List <- function(w_sequence_pattern_list,...){
   map_chr(w_sequence_pattern_list, function(w_sequence_pattern){
-    format_sequence(w_sequence_pattern)
+    format_sequence(w_sequence_pattern,...)
   })
 }
 

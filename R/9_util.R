@@ -1,4 +1,7 @@
-format_sequence.W_Sequence_Dataframe <- function(df, compare = FALSE, truncate_patterns = FALSE){
+format_sequence.W_Sequence_Dataframe <- function(df,
+                                                 compare = FALSE,
+                                                 truncate_patterns = FALSE,
+                                                 html_format = FALSE){
 
   column_patterns <- names(df)[str_detect(names(df),"_pattern")]
   columns <- c(column_patterns, "weighted_sequence")
@@ -9,10 +12,12 @@ format_sequence.W_Sequence_Dataframe <- function(df, compare = FALSE, truncate_p
       mutate_at(column_patterns, truncate_pattern)
   }
 
+
+
   df <-
     df %>%
       select(one_of("cluster", "n", columns)) %>%
-      mutate_at(columns, format_sequence) %>%
+      mutate_at(columns, function(x) format_sequence(x, html_format = html_format)) %>%
       mutate(n = as.double(n),
              n_percent = str_c(round(n/sum(n) * 100, digits = 2),"%")) %>%
     select(one_of("cluster", "n", "n_percent", columns))
@@ -27,8 +32,9 @@ format_sequence.W_Sequence_Dataframe <- function(df, compare = FALSE, truncate_p
 
 compare_sequences <- function(df){
   df %>%
-    gather(-cluster, -n, -n_percent, key = "pattern", value = "w_sequence") %>%
-      arrange(cluster)
+    gather(-cluster, -n, -n_percent, key = "pattern", value = "sequence") %>%
+      arrange(cluster) %>%
+      mutate(pattern = stringr::str_replace(pattern, "_pattern", ""))
 }
 
 

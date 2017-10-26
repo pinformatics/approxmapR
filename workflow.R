@@ -38,23 +38,32 @@ mvad %>%
 
 aggs_aligned <-
 agg_seqs %>%
-  filter_pattern(threshold = 0.7, pattern_name = "consensus")
-
-aggs_aligned %>%
-  pull(consensus_pattern) %>%
-  .[[1]] %>%
-  unclass()
+  filter_pattern(threshold = 0.5, pattern_name = "consensus") %>%
+  filter_pattern(threshold = 0.3, pattern_name = "variation")
 
 aggs_aligned %>%
   format_sequence(truncate_patterns = TRUE) %>%
   View()
 
-# write_csv("~/seqs.csv")
+formatted <-
+  aggs_aligned %>%
+    format_sequence(compare = TRUE,
+                    html_format = TRUE,
+                    truncate_patterns = T)
+formatted <-
+formatted %>%
+  mutate(sequence = ifelse(pattern == "weighted_sequence", str_replace(sequence, "<\\(", "<( "), sequence))
+rmarkdown::render(input = "inst/rmd_w_sequence.Rmd", params = list(input = formatted))
 
-#
-# %>%
-#   format_sequence(compare = T) %>%
-#   View()
+aggs_aligned %>%
+  generate_reports(truncate_patterns = T)
+
+itst <- aggs_aligned %>%
+  pull(weighted_sequence) %>%
+  .[[1]] %>%
+  unclass() %>% .[[1]]
+itst$itemset_weight <- NULL
+flatten_dfc(itst)
 
 
 k_vals <-

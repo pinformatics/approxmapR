@@ -287,27 +287,56 @@ align_sequences.W_Sequence <- function(w_sequence,
 }
 
 
-format_sequence.W_Sequence <- function(w_sequence){
-  w_sequence %>%
-    map_chr(function(w_itemset){
-      if(length(w_itemset$elements) > 0){
-        str_c(w_itemset$elements, ":", w_itemset$element_weights) %>%
-          str_c(collapse = ", ") %>%
-          paste0("(", ., ")", ":", w_itemset$itemset_weight)
-      }
-      else{
-        NA
-      }
+format_sequence.W_Sequence <- function(w_sequence, html_format = FALSE){
+  n <- attr(w_sequence, "n")
+  if(html_format){
+    cuts <- floor(n*seq(0,1,0.2))[2:5]
+    w_sequence %>%
+      map_chr(function(w_itemset){
+        tibble(element = as.character(w_itemset$elements),
+               weight = as.integer(w_itemset$element_weights)) %>%
+           mutate(
+             otag =
+               case_when(
+                 weight > cuts[4] ~ "<priority1>",
+                 between(weight, cuts[3], cuts[4]) ~ "<priority2>",
+                 between(weight, cuts[2], cuts[3]) ~ "<priority3>",
+                 between(weight, cuts[1], cuts[2]) ~ "<priority4>",
+                 TRUE ~ "<priority5>"
+               ),
+             ctag = stringr::str_replace(otag,"<","</"),
+             element_html = str_c(otag, element, ":", weight, ctag)) %>%
+             pull(element_html) %>%
+             str_c(collapse = ", ") %>%
+             paste0("(", ., ")", ":", w_itemset$itemset_weight)
+      }) %>%
+      str_c(collapse = " ") %>%
+      paste0("<", ., ">", " : ", n) %>%
+      stringr::str_replace("<\\(", " < ( ")
 
-    }) %>%
-    .[!is.na(.)] %>%
-    str_c(collapse = " ") %>%
-    paste0("<", ., ">", " : ", attr(w_sequence, "n"))
+  } else{
+    w_sequence %>%
+      map_chr(function(w_itemset){
+        if(length(w_itemset$elements) > 0){
+          str_c(w_itemset$elements, ":", w_itemset$element_weights) %>%
+            str_c(collapse = ", ") %>%
+            paste0("(", ., ")", ":", w_itemset$itemset_weight)
+        }
+        else{
+          NA
+        }
+
+      }) %>%
+      .[!is.na(.)] %>%
+      str_c(collapse = " ") %>%
+      paste0("<", ., ">", " : ", n)
+  }
+
 }
 
-format_sequence.W_Sequence_List <- function(w_sequence_list){
+format_sequence.W_Sequence_List <- function(w_sequence_list, ...){
   map_chr(w_sequence_list, function(w_sequence){
-    format_sequence(w_sequence)
+    format_sequence(w_sequence, ...)
   })
 }
 
