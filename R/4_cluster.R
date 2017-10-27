@@ -90,6 +90,8 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
   # message("------------Clustering------------")
   stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))
 
+  # .GlobalEnv$env_report$k <- k
+
   message("Clustering...")
 
   if(exists("env_dm", envir = globalenv()) &&

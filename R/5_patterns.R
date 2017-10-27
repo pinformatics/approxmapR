@@ -41,7 +41,8 @@ filter_pattern.W_Sequence <- function(w_sequence,
                                       threshold = 0.5,
                                       noise_threshold = 0,
                                       blank_if_absent = F,
-                                      pattern_name = NULL){
+                                      pattern_name = NULL,
+                                      output_w_sequence = FALSE){
   n <- attr(w_sequence, "n")
 
   elements <- unlist(map(w_sequence,
@@ -64,7 +65,7 @@ filter_pattern.W_Sequence <- function(w_sequence,
 
       if(blank_if_absent && (sum(threshold_check) == 0)) {
         w_sequence_itemset$elements <- ""
-        w_sequence_itemset$element_weights <- 0
+        w_sequence_itemset$element_weights <- ""
       } else if(sum(threshold_check) == 0){
         # w_sequence_itemset$elements <- NULL
         # w_sequence_itemset$element_weights <- NULL
@@ -85,8 +86,9 @@ filter_pattern.W_Sequence <- function(w_sequence,
   attr(pattern, "n") <- n
 
   pattern <- class_it(pattern, "W_Sequence")
-  class_it(pattern, "W_Sequence_Pattern")
+  if(!output_w_sequence) pattern <- class_it(pattern, "W_Sequence_Pattern")
 
+  pattern
 }
 
 format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern, html_format = FALSE){

@@ -8,14 +8,6 @@ df <- as_tibble(mvad)
 
 mvad <- df
 
-df <-
-df %>%
-  select(-(2:14)) %>%
-  gather(time, event, -id) %>%
-  mutate(period =  str_c("01 ", time) %>%  str_replace("\\."," ")) %>%
-  select(id, period, event) %>%
-  mutate(period = readr::parse_date(period, format = "%d %b %y") %>%
-    as.character())
 
 k <- 1:50
 
@@ -41,22 +33,26 @@ agg_seqs %>%
   filter_pattern(threshold = 0.5, pattern_name = "consensus") %>%
   filter_pattern(threshold = 0.3, pattern_name = "variation")
 
-aggs_aligned %>%
-  format_sequence(truncate_patterns = TRUE) %>%
-  View()
 
 formatted <-
   aggs_aligned %>%
     format_sequence(compare = TRUE,
                     html_format = TRUE,
                     truncate_patterns = T)
-formatted <-
-formatted %>%
-  mutate(sequence = ifelse(pattern == "weighted_sequence", str_replace(sequence, "<\\(", "<( "), sequence))
+
 rmarkdown::render(input = "inst/rmd_w_sequence.Rmd", params = list(input = formatted))
 
 aggs_aligned %>%
   generate_reports(truncate_patterns = T)
+
+aggs_aligned %>%
+  filter_pattern(noise_threshold = 10,
+                 blank_if_absent = T,
+                 pattern_name = "filtered",
+                 output_w_sequence = TRUE) %>%
+  select(1:3) %>%
+  generate_reports()
+
 
 itst <- aggs_aligned %>%
   pull(weighted_sequence) %>%

@@ -4,7 +4,11 @@ format_sequence.W_Sequence_Dataframe <- function(df,
                                                  html_format = FALSE){
 
   column_patterns <- names(df)[str_detect(names(df),"_pattern")]
-  columns <- c(column_patterns, "weighted_sequence")
+  if("weighted_sequence" %in% names(df)){
+    columns <- c(column_patterns, "weighted_sequence")
+  } else {
+    columns <- column_patterns
+  }
 
   if(truncate_patterns){
     df <-
@@ -39,51 +43,7 @@ compare_sequences <- function(df){
 
 
 
-generate_summary_stats <- function(input_data, results_directory = "~", noise_threshold = 0, write_files = FALSE){
 
-  input_data <- as_tibble(input_data) %>% ungroup()
-
-  n_unique_items <- input_data %>%
-    pull(event) %>% unique() %>%
-    length()
-  cat(noquote(sprintf("The number of unique items is %i\n", n_unique_items)))
-
-
-  cat(noquote("\nStatistics for the number of sets per sequence:\n"))
-  n_sets <-
-    input_data %>%
-    select(id,period) %>%
-    group_by(id) %>% unique() %>%
-    summarise(len = n()) %>%
-    pull(len)
-  print(summary(n_sets))
-
-
-  cat(noquote("\nStatistics for the number of items in a set\n"))
-  n_items_in_set <-
-    input_data %>%
-    group_by(id,period) %>%
-    unique() %>%
-    summarise(len = n()) %>%
-    pull(len)
-  print(summary(n_items_in_set))
-
-  cat(noquote("\nFrequencies of items\n"))
-  count_items <-
-    input_data %>%
-    count(event) %>%
-    arrange(desc(n)) %>%
-    filter(n > noise_threshold)
-
-  print(summary(count_items$n))
-  cat("\n")
-
-  if(write_files){
-    results_directory <- paste0(results_directory,"/public")
-    if(!dir.exists(results_directory)) dir.create(results_directory)
-    write_csv(count_items,paste0(results_directory,"/count_items.csv"))
-  }
-}
 
 class_it <- function(obj, class_name){
   class(obj) <- c(class_name, class(obj)) %>%
@@ -111,5 +71,29 @@ truncate_pattern.W_Sequence_Pattern <- function(w_sequence){
   }
   w_sequence[truncate_index] <- NULL
   w_sequence
+}
+
+w_sequence_to_tibble <- function(w_sequence){
+  tibble(element = map(w_sequence, "elements") %>% unlist(),
+         element_weight = map(w_sequence, "element_weights") %>% unlist(),
+         itemset = map2(1:length(w_sequence), w_sequence, ~rep(.x ,length(.y$elements))) %>% unlist()) %>%
+  mutate(element_no = row_number())
+}
+
+plot_weighted_sequence <- function(w_sequence){
+  df_sequence <-
+    w_sequence %>%
+    w_sequence_to_tibble()
+
+  df_itemset <-
+  df_sequence %>%
+      group_by(itemset) %>%
+      filter(element_no == max(element_no))
+
+  df_sequence %>%
+    ggplot(aes(element_no, element_weight)) +
+    geom_point() +
+    geom_label(aes(y = element_weight + 0.02*element_weight, label = element)) +
+    geom_vline(data = df_itemset, aes(xintercept = element_no))
 }
 

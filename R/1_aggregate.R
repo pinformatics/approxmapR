@@ -31,6 +31,10 @@ pre_aggregated <- function(df, summary_stats = TRUE){
     message("Generating summary statistics of aggregated data...")
     generate_summary_stats(aggregated_data)
   }
+
+  # .GlobalEnv$env_report <- new.env()
+  # .GlobalEnv$env_report$aggregated_data <- aggregated_data
+
   df
 }
 
@@ -146,8 +150,13 @@ aggregate_sequences <- function(unaggregated_data,
     generate_summary_stats(aggregated_data)
   }
 
+  # .GlobalEnv$env_report <- new.env()
+  # .GlobalEnv$env_report$aggregated_data <- aggregated_data
+
   aggregated_data
 }
+
+
 
 
 convert_to_sequence <- function(df_seq){
