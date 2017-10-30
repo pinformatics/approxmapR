@@ -46,11 +46,6 @@ aggs_aligned %>%
   generate_reports(truncate_patterns = T)
 
 aggs_aligned %>%
-  filter_pattern(noise_threshold = 10,
-                 blank_if_absent = T,
-                 pattern_name = "filtered",
-                 output_w_sequence = TRUE) %>%
-  select(1:3) %>%
   generate_reports()
 
 
