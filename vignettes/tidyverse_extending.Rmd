@@ -1,0 +1,77 @@
+---
+title: "Using tidyverse in tandem with approxmapR"
+author: "Gurudev Ilangovan"
+date: "November 17, 2017"
+output: html_document
+---
+```{r}
+library(approxmapR)
+library(tidyverse)
+```
+
+```{r}
+clustered_seqs <- 
+  mvad %>%
+    aggregate_sequences(format = "%Y-%m-%d", 
+                        unit = "month", 
+                        n_units = 1, 
+                        summary_stats=FALSE) %>%
+    cluster_knn(k = 15) 
+
+clustered_seqs %>%
+  top_n(2) %>%
+  pull(df_sequences) %>%
+  map(function(df_cluster){
+            df_cluster %>%
+              mutate(sequence = map_chr(sequence,
+                                        format_sequence))
+          })
+```
+
+```{r}
+n_months <- seq(1,10)
+
+agg_dfs <- 
+  tibble(n_months = n_months) %>%
+  mutate(agg_df = map(n_months, function(n){
+      mvad %>%
+        aggregate_sequences(format = "%Y-%m-%d", 
+                          unit = "month", 
+                          n_units = n,
+                          summary_stats = F)
+    })) %>%
+  mutate(summary_info = map(agg_df, generate_summary_stats_dup),
+         mean_sets = map_dbl(summary_info, function(x){
+           x %>% filter(type == "set") %>% pull(mean)
+         }))
+
+agg_dfs %>%
+  ggplot(aes(n_months, mean_sets)) +
+  geom_line()
+
+
+agg_df <-
+  mvad %>% 
+    aggregate_sequences(format = "%Y-%m-%d", 
+                        unit = "month", 
+                        n_units = 3)
+
+k <- seq(1, 50, 3)
+
+k_vals <-
+tibble(k = k) %>%
+  mutate(cluster_ws = map(k, function(k){
+    agg_df %>%
+      cluster_knn(k = k) %>%
+        filter_pattern(threshold = 0.4)
+  }))
+
+k_vals %>%
+  mutate(num_clusters = map_int(cluster_ws, ~nrow(.))) %>% 
+  ggplot(aes(k, num_clusters)) + geom_line()
+```
+
+```{r}
+
+```
+

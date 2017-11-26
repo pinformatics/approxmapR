@@ -22,8 +22,8 @@ Imports: Rcpp,
     stringr,
     readr
 Suggests: testthat,
-    dplyr,
     knitr,
-    rmarkdown
+    rmarkdown,
+    colormap
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1

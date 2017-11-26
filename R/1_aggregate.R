@@ -29,7 +29,7 @@ pre_aggregated <- function(df, summary_stats = TRUE){
   class(df) <- c("Aggregated_Dataframe", "tbl_df", "tbl", "data.frame")
   if(summary_stats){
     message("Generating summary statistics of aggregated data...")
-    generate_summary_stats(aggregated_data)
+    generate_summary_stats(df)
   }
 
   # .GlobalEnv$env_report <- new.env()

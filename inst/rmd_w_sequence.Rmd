@@ -19,6 +19,7 @@ title: `r params$title`
 }
 </style>
 
+
 ```{r, echo=FALSE}
 library(knitr)
 library(kableExtra)

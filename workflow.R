@@ -13,6 +13,7 @@ k <- 1:50
 
 agg_df <-
   df %>%
+  mutate(event = str_to_lower(event)) %>%
     aggregate_sequences(format = "%Y-%m-%d", unit = "day", n_units = 1)
 
 k_vals <-
@@ -25,13 +26,14 @@ tibble(k = k) %>%
 
 agg_seqs <-
 mvad %>%
+  mutate(event = str_to_lower(event)) %>%
   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 6) %>%
     cluster_knn(k = 15)
 
 aggs_aligned <-
 agg_seqs %>%
-  filter_pattern(threshold = 0.5, pattern_name = "consensus") %>%
-  filter_pattern(threshold = 0.3, pattern_name = "variation")
+  filter_pattern(threshold = 0.3, pattern_name = "variation") %>%
+  filter_pattern(threshold = 0.5, pattern_name = "consensus")
 
 
 formatted <-
@@ -75,6 +77,50 @@ k_vals %>%
     geom_line()
 
 
+
+
+
+all_same <- function(x){
+  l <- x %>%
+  unique() %>%
+  length()
+  ifelse(l == 1, TRUE, FALSE)
+}
+
+x <- agg_seqs %>%
+  filter(row_number() == 4)
+attr(x,"class") = attr(agg_seqs, "class")
+y <- x %>%
+  get_weighted_sequence()
+y2 <- y %>%
+  as.data.frame() %>%
+  .[1,4] %>% .[[1]] %>%
+  attr("alignments")
+
+all <- agg_seqs %>%
+  get_weighted_sequence()
+
+all <- all %>% mutate(cfw = weighted_sequence %>% map2_int(cluster, function(x,y){
+  sink(paste0(y,".txt"))
+  attr(x, "alignments") %>% print()
+  sink()
+  attr(x, "alignments") %>%
+    map_int(length) %>%
+    unique()
+}))
+
+map_dbl(y2, length) %>%
+  all_same()
+
+dem_aligned <-
+pre_agg_demo %>%
+  pre_aggregated() %>%
+  cluster_knn(k = 2) %>%
+  get_weighted_sequence()
+
+dem_aligned %>%
+pull(weighted_sequence)%>%
+  map(~attr(.,"alignments"))
 
 # df %>%
 #   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%

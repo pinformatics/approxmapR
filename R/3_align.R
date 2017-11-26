@@ -192,6 +192,10 @@ align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_dist
     get_weighted_sequence(aligned_sequences$aligned_sequence_1,
                           aligned_sequences$aligned_sequence_2)
 
+  attr(w_sequence, "alignments") <-
+    list(aligned_sequences$aligned_sequence_1,
+         aligned_sequences$aligned_sequence_2)
+
   w_sequence
 
 }
@@ -211,22 +215,27 @@ align_sequences.W_Sequence <- function(w_sequence,
 
   distance_matrix <- inter_sequence_distance(w_sequence, sequence, fun)$distance_matrix
   n <- attr(w_sequence, "n")
+  pre_alignments <- attr(w_sequence, "alignments")
 
   aligned_sequence <- list()
   aligned_w_sequence <- list()
+  aligned_alignments <- list()
 
   i <- length(sequence)+1
   j <- length(w_sequence)+1
 
-  backtrack <- function(i, j, aligned_sequence, aligned_w_sequence, operations = "") {
-    if((i==1) & (j==1))
-    {
+  backtrack <- function(i, j,
+                        aligned_sequence,
+                        aligned_w_sequence,
+                        aligned_alignments = list()) {
+
+    if((i==1) & (j==1)){
       result = list(aligned_sequence = structure(aligned_sequence,
                                                  class = "Sequence"),
                     aligned_w_sequence = structure(aligned_w_sequence,
                                                    class = "W_Sequence",
                                                    n = attr(w_sequence, "n")),
-                    operations = operations)
+                    aligned_alignments = aligned_alignments)
       return(result)
     }
 
@@ -236,42 +245,80 @@ align_sequences.W_Sequence <- function(w_sequence,
 
         aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
-        backtrack(i - 1, j - 1, aligned_sequence, aligned_w_sequence, operations)
+        if(length(aligned_alignments) == 0){
+          aligned_alignments <- map(pre_alignments, j-1)
+        } else{
+          alignment_elements <- map(pre_alignments, j-1)
+          aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+        }
+
+        backtrack(i - 1, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
 
       } else if (distance_matrix[i,j] == distance_matrix[i, j-1] + 1)  {
 
         #is left plus cost?
         aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
-        backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, operations)
+        if(length(aligned_alignments) == 0){
+          aligned_alignments <- map(pre_alignments, j-1)
+        } else{
+          alignment_elements <- map(pre_alignments, j-1)
+          aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+        }
+
+        backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
 
       } else if (distance_matrix[i,j]==distance_matrix[i-1,j]+1) {
 
         #is up plus cost
         aligned_w_sequence <- insert_blank_w_itemset(aligned_w_sequence)
         aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
-        backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, operations)
+        if(length(aligned_alignments) == 0){
+          aligned_alignments <- rep(list(class_it("_","Sequence_Itemset")),length(pre_alignments))
+        } else{
+          aligned_alignments <- map(aligned_alignments, ~append(., class_it("_","Sequence_Itemset"), 0))
+        }
+
+        backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, aligned_alignments)
 
       } else {
 
         #diag
         aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
-        backtrack(i - 1, j - 1, aligned_sequence, aligned_w_sequence, operations)
+        if(length(aligned_alignments) == 0){
+          aligned_alignments <- map(pre_alignments, j-1)
+        } else{
+          alignment_elements <- map(pre_alignments, j-1)
+          aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+        }
+
+        backtrack(i - 1, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
 
       }
     } else if ((i==1) & (j>1)) {
 
       aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
       aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
-      backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, operations)
+      if(length(aligned_alignments) == 0){
+        aligned_alignments <- map(pre_alignments, j-1)
+      } else{
+        alignment_elements <- map(pre_alignments, j-1)
+        aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+      }
+
+      backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
 
     } else if((j==1) & (i>1)) {
-
       aligned_w_sequence <- insert_blank_w_itemset(aligned_w_sequence)
       aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
-      backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, operations)
+      if(length(aligned_alignments) == 0){
+        aligned_alignments <- rep(list(class_it("_","Sequence_Itemset")),length(pre_alignments))
+      } else{
+        aligned_alignments <- map(aligned_alignments, ~append(., class_it("_","Sequence_Itemset"), 0))
+      }
 
+      backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, aligned_alignments)
     }
   }
   # debug(backtrack)
@@ -282,6 +329,20 @@ align_sequences.W_Sequence <- function(w_sequence,
   w_sequence <-
     get_weighted_sequence(aligned_sequences$aligned_w_sequence,
                           aligned_sequences$aligned_sequence)
+  aligned_sequences <-
+    append(aligned_sequences$aligned_alignments, list(aligned_sequences$aligned_sequence))
+
+  aligned_sequences <-
+    aligned_sequences %>%
+    map(function(x){
+      # x <- map(function(y){
+      #
+      # })
+      class_it(x, "Sequence")
+    })
+
+
+  attr(w_sequence, "alignments") <- aligned_sequences
 
   w_sequence
 }
@@ -290,21 +351,24 @@ align_sequences.W_Sequence <- function(w_sequence,
 format_sequence.W_Sequence <- function(w_sequence, html_format = FALSE){
   n <- attr(w_sequence, "n")
   if(html_format){
-    cuts <- floor(n*seq(0,1,0.2))[2:5]
+    colors <- rev(colormap::colormap(colormap = "viridis", nshades = n)%>%
+    stringr::str_sub(1,-3))
+
+    # cuts <- floor(n*seq(0,1,0.2))[2:5]
     w_sequence %>%
       map_chr(function(w_itemset){
         tibble(element = as.character(w_itemset$elements),
                weight = as.integer(w_itemset$element_weights)) %>%
            mutate(
-             otag =
-               case_when(
-                 weight > cuts[4] ~ "<priority1>",
-                 between(weight, cuts[3], cuts[4]) ~ "<priority2>",
-                 between(weight, cuts[2], cuts[3]) ~ "<priority3>",
-                 between(weight, cuts[1], cuts[2]) ~ "<priority4>",
-                 TRUE ~ "<priority5>"
-               ),
-             ctag = stringr::str_replace(otag,"<","</"),
+             ratio = weight/n,
+             color = colors[floor(ratio*n)],
+             font_size = paste0(floor((1 + ratio * .6) * 100),"%"),
+             font_weight = signif(460 + ratio * 340, 1),
+             otag = str_c('<span style="',
+                          "color: ",color,"; ",
+                          "font-size: ",font_size,"; ",
+                          "font-weight: ",font_weight,";", '">'),
+             ctag = "</span>",
              element_html = str_c(otag, element, ":", weight, ctag)) %>%
              pull(element_html) %>%
              str_c(collapse = ", ") %>%

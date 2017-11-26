@@ -96,21 +96,25 @@ format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern, html_format =
   n <- attr(w_sequence_pattern, "n")
 
   if(html_format){
-    cuts <- floor(n*seq(0,1,0.2))[2:5]
+
+    colors <- rev(colormap::colormap(colormap = "viridis", nshades = n)%>%
+                    stringr::str_sub(1,-3))
+
+    # cuts <- floor(n*seq(0,1,0.2))[2:5]
     w_sequence_pattern %>%
       map_chr(function(w_itemset){
         tibble(element = as.character(w_itemset$elements),
                weight = as.integer(w_itemset$element_weights)) %>%
           mutate(
-            otag =
-              case_when(
-                weight > cuts[4] ~ "<priority1>",
-                between(weight, cuts[3], cuts[4]) ~ "<priority2>",
-                between(weight, cuts[2], cuts[3]) ~ "<priority3>",
-                between(weight, cuts[1], cuts[2]) ~ "<priority4>",
-                TRUE ~ "<priority5>"
-              ),
-            ctag = stringr::str_replace(otag,"<","</"),
+            ratio = weight/n,
+            color = colors[floor(ratio*n)],
+            font_size = paste0(floor((1 + ratio * .6) * 100),"%"),
+            font_weight = signif(460 + ratio * 340, 1),
+            otag = str_c('<span style="',
+                         "color: ",color,"; ",
+                         "font-size: ",font_size,"; ",
+                         "font-weight: ",font_weight,";", '">'),
+            ctag = "</span>",
             element_html = str_c(otag, element, ctag)) %>%
           pull(element_html) %>%
           str_c(collapse = ", ") %>%

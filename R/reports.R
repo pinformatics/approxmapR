@@ -133,3 +133,56 @@ generate_summary_stats <- function(input_data,
     write_csv(count_items,paste0(results_directory,"/count_items.csv"))
   }
 }
+
+
+generate_summary_stats_dup <- function(input_data,
+                                   results_directory = "~",
+                                   noise_threshold = 0,
+                                   write_files = FALSE){
+
+  input_data <- as_tibble(input_data) %>% ungroup()
+
+  n_unique_items <- input_data %>%
+    pull(event) %>% unique() %>%
+    length()
+
+  n_sets <-
+    input_data %>%
+    select(id,period) %>%
+    group_by(id) %>% unique() %>%
+    summarise(len = n()) %>%
+    pull(len)
+
+  n_sets_info <-
+       summary(n_sets) %>%
+       broom::tidy() %>%
+       mutate(type = "set")
+
+
+  n_items_in_set <-
+    input_data %>%
+    group_by(id,period) %>%
+    unique() %>%
+    summarise(len = n()) %>%
+    pull(len)
+
+  n_itemset_info <-
+    summary(n_items_in_set) %>%
+    broom::tidy() %>%
+    mutate(type = "set_items")
+
+
+  count_items <-
+    input_data %>%
+    count(event) %>%
+    arrange(desc(n)) %>%
+    filter(n > noise_threshold)
+
+  count_items_info <-
+    summary(count_items$n) %>%
+    broom::tidy() %>%
+    mutate(type = "count_items")
+
+  bind_rows(n_sets_info, n_itemset_info, count_items_info)
+}
+
