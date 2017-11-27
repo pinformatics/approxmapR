@@ -246,10 +246,13 @@ align_sequences.W_Sequence <- function(w_sequence,
         aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
         if(length(aligned_alignments) == 0){
-          aligned_alignments <- map(pre_alignments, j-1)
+          aligned_alignments <- map(pre_alignments, j-1) %>% map(~list(.))
         } else{
           alignment_elements <- map(pre_alignments, j-1)
-          aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+          aligned_alignments <-
+            map2(aligned_alignments,
+                 alignment_elements,
+                 ~append(.x,list(.y),0))
         }
 
         backtrack(i - 1, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
@@ -260,10 +263,13 @@ align_sequences.W_Sequence <- function(w_sequence,
         aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
         if(length(aligned_alignments) == 0){
-          aligned_alignments <- map(pre_alignments, j-1)
+          aligned_alignments <- map(pre_alignments, j-1) %>% map(~list(.))
         } else{
           alignment_elements <- map(pre_alignments, j-1)
-          aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+          aligned_alignments <-
+            map2(aligned_alignments,
+                 alignment_elements,
+                 ~append(.x,list(.y),0))
         }
 
         backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
@@ -276,7 +282,8 @@ align_sequences.W_Sequence <- function(w_sequence,
         if(length(aligned_alignments) == 0){
           aligned_alignments <- rep(list(class_it("_","Sequence_Itemset")),length(pre_alignments))
         } else{
-          aligned_alignments <- map(aligned_alignments, ~append(., class_it("_","Sequence_Itemset"), 0))
+          aligned_alignments <- map(aligned_alignments,
+                                    ~append(list(.), class_it("_","Sequence_Itemset"), 0))
         }
 
         backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, aligned_alignments)
@@ -287,10 +294,13 @@ align_sequences.W_Sequence <- function(w_sequence,
         aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
         if(length(aligned_alignments) == 0){
-          aligned_alignments <- map(pre_alignments, j-1)
+          aligned_alignments <- map(pre_alignments, j-1) %>% map(~list(.))
         } else{
           alignment_elements <- map(pre_alignments, j-1)
-          aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+          aligned_alignments <-
+            map2(aligned_alignments,
+                 alignment_elements,
+                 ~append(.x,list(.y),0))
         }
 
         backtrack(i - 1, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
@@ -301,10 +311,13 @@ align_sequences.W_Sequence <- function(w_sequence,
       aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
       aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
       if(length(aligned_alignments) == 0){
-        aligned_alignments <- map(pre_alignments, j-1)
+        aligned_alignments <- map(pre_alignments, j-1) %>% map(~list(.))
       } else{
         alignment_elements <- map(pre_alignments, j-1)
-        aligned_alignments <- map2(aligned_alignments, alignment_elements, ~append(.x,list(.y),0))
+        aligned_alignments <-
+          map2(aligned_alignments,
+               alignment_elements,
+               ~append(.x,list(.y),0))
       }
 
       backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
@@ -315,7 +328,7 @@ align_sequences.W_Sequence <- function(w_sequence,
       if(length(aligned_alignments) == 0){
         aligned_alignments <- rep(list(class_it("_","Sequence_Itemset")),length(pre_alignments))
       } else{
-        aligned_alignments <- map(aligned_alignments, ~append(., class_it("_","Sequence_Itemset"), 0))
+        aligned_alignments <- map(aligned_alignments, ~append(list(.), class_it("_","Sequence_Itemset"), 0))
       }
 
       backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, aligned_alignments)

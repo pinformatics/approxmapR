@@ -1,3 +1,16 @@
+
+
+#' aggregation functions
+#'
+#' A function used by \code{\link{aggregate_sequences}} to get
+#' the unit of aggregation
+#'
+#' @param unit The unit of aggregation
+#' @param n_units The number of units to aggregate
+#'
+#' @return Number of days to aggregate
+#'
+#' @examples \code{\link{get_n_days("week", 2)}}
 get_n_days <- function(unit,n_units) {
   if(unit == "day") {
     n_days <- n_units
