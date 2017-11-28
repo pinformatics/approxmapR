@@ -1,3 +1,4 @@
+#' @export
 format_sequence.W_Sequence_Dataframe <- function(df,
                                                  compare = FALSE,
                                                  truncate_patterns = FALSE,
@@ -34,6 +35,7 @@ format_sequence.W_Sequence_Dataframe <- function(df,
 
 }
 
+#' @export
 compare_sequences <- function(df){
   df %>%
     gather(-cluster, -n, -n_percent, key = "pattern", value = "sequence") %>%
@@ -44,21 +46,24 @@ compare_sequences <- function(df){
 
 
 
-
+#' @export
 class_it <- function(obj, class_name){
   class(obj) <- c(class_name, class(obj)) %>%
     unique()
   obj
 }
 
+#' @export
 truncate_pattern <- function(x, ...){
   UseMethod("truncate_pattern")
 }
 
+#' @export
 truncate_pattern.W_Sequence_Pattern_List <- function(w_sequence_list){
   class_it(map(w_sequence_list, truncate_pattern), "W_Sequence_List")
 }
 
+#' @export
 truncate_pattern.W_Sequence_Pattern <- function(w_sequence){
   truncate_index <- rep(FALSE, length(w_sequence))
   for(i in seq_along(w_sequence)){
@@ -73,6 +78,7 @@ truncate_pattern.W_Sequence_Pattern <- function(w_sequence){
   w_sequence
 }
 
+#' @export
 w_sequence_to_tibble <- function(w_sequence){
   tibble(element = map(w_sequence, "elements") %>% unlist(),
          element_weight = map(w_sequence, "element_weights") %>% unlist(),
@@ -80,6 +86,7 @@ w_sequence_to_tibble <- function(w_sequence){
   mutate(element_no = row_number())
 }
 
+#' @export
 plot_weighted_sequence <- function(w_sequence){
   df_sequence <-
     w_sequence %>%

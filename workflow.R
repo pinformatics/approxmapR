@@ -122,9 +122,6 @@ dem_aligned %>%
 pull(weighted_sequence)%>%
   map(~attr(.,"alignments"))
 
-map2(x, alignment_elements, function(x,y){
-  append(x,list(c("a","b")),0)
-})
 
 # df %>%
 #   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1) %>%

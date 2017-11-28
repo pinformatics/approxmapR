@@ -1,14 +1,16 @@
+#' @export
 filter_pattern <- function(x, ...){
   UseMethod("filter_pattern")
 }
 
+#' @export
 filter_pattern.Clustered_Dataframe <- function(df_clustered, ...){
   df_clustered %>%
     get_weighted_sequence() %>%
       filter_pattern(...)
 }
 
-
+#' @export
 filter_pattern.W_Sequence_Dataframe <- function(df_w_sequences, pattern_name = "consensus", ...){
 
   if(!("weighted_sequence" %in% names(df_w_sequences))){
@@ -36,7 +38,7 @@ filter_pattern.W_Sequence_Dataframe <- function(df_w_sequences, pattern_name = "
   df_pattern
 }
 
-
+#' @export
 filter_pattern.W_Sequence <- function(w_sequence,
                                       threshold = 0.5,
                                       noise_threshold = 0,
@@ -91,6 +93,7 @@ filter_pattern.W_Sequence <- function(w_sequence,
   pattern
 }
 
+#' @export
 format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern, html_format = FALSE){
 
   n <- attr(w_sequence_pattern, "n")
@@ -142,18 +145,20 @@ format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern, html_format =
 
 
 
-
+#' @export
 format_sequence.W_Sequence_Pattern_List <- function(w_sequence_pattern_list,...){
   map_chr(w_sequence_pattern_list, function(w_sequence_pattern){
     format_sequence(w_sequence_pattern,...)
   })
 }
 
+#' @export
 print.W_Sequence_Pattern <- function(w_sequence_pattern, ...){
   format_sequence(w_sequence_pattern) %>%
     cat()
 }
 
+#' @export
 print.W_Sequence_Pattern_List <- function(w_sequence_pattern_list, ...){
   walk(w_sequence_pattern_list, function(w_sequence_pattern){
     cat(format_sequence(w_sequence_pattern), "\n")

@@ -1,3 +1,4 @@
+#' @export
 create_folder <- function(directory, folder){
   output_directory = paste0(directory, "/", folder)
 
@@ -7,6 +8,7 @@ create_folder <- function(directory, folder){
   output_directory
 }
 
+#' @export
 file_check <- function(dir = ".", file_name){
 
   files_exist <- list.files(path = dir)
@@ -32,7 +34,7 @@ file_check <- function(dir = ".", file_name){
   }
 }
 
-
+#' @export
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              truncate_patterns = FALSE,
@@ -84,7 +86,7 @@ generate_reports <- function(w_sequence_dataframe,
 
 }
 
-
+#' @export
 generate_summary_stats <- function(input_data,
                                    results_directory = "~",
                                    noise_threshold = 0,
@@ -134,7 +136,7 @@ generate_summary_stats <- function(input_data,
   }
 }
 
-
+#' @export
 generate_summary_stats_dup <- function(input_data,
                                    results_directory = "~",
                                    noise_threshold = 0,

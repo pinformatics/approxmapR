@@ -2,22 +2,23 @@
 % Please edit documentation in R/1_aggregate.R
 \name{get_n_days}
 \alias{get_n_days}
-\title{aggregation functions}
+\title{Aggregation functions}
 \usage{
 get_n_days(unit, n_units)
 }
 \arguments{
-\item{unit}{The unit of aggregation}
+\item{unit}{The unit of aggregation. Takes one of c("day", "week",
+"month", "6 months", "year")}
 
 \item{n_units}{The number of units to aggregate}
 }
 \value{
-Number of days to aggregate
+Number of days to aggregate in the input data
 }
 \description{
 A function used by \code{\link{aggregate_sequences}} to get
 the unit of aggregation
 }
 \examples{
-\\code{\\link{get_n_days("week", 2)}}
+get_n_days("week", 2)
 }

@@ -1,33 +1,4 @@
-# #dummy clustering
-#
-# cluster_knn_api <- function(df){
-#   set.seed(1)
-#   ids <- unique(df$id)
-#   clust <- sample(1:3, length(ids), replace = T)
-#   density <- abs(rnorm(length(ids), 1, 3))
-#   cluster_info <- tibble(id = ids, cluster = clust, density = density)
-#   df_clustered <-
-#     df %>%
-#     left_join(cluster_info, by = "id") %>%
-#     group_by(cluster) %>%
-#     arrange(density,id) %>%
-#     nest(-density, .key = df_list) %>%
-#     mutate(n = map_int(df_list, nrow),
-#            df_list = map(df_list,
-#                          function(df_group){
-#                            if("Aggregated_Dataframe" %in% class(df)){
-#                              class(df_group) <- class(df)
-#                            }
-#                            df_group
-#                          })
-#     ) %>%
-#     arrange(desc(n)) %>%
-#     mutate(cluster = row_number())
-#   class(df_clustered) <- c("Clustered_Dataframe", class(df_clustered))
-#
-#   df_clustered
-# }
-
+#' @export
 calculate_density_info <- function(distance_matrix, k) {
   apply(distance_matrix, 2, function(distances){
     k_smallest_dist <- sort(distances, partial = k)[k]
@@ -40,6 +11,7 @@ calculate_density_info <- function(distance_matrix, k) {
   })
 }
 
+#' @export
 cluster_lookup <- function(cluster_tbl){
   tb <- cluster_tbl %>%
     select(cluster_id, cluster_merge) %>%
@@ -60,6 +32,7 @@ cluster_lookup <- function(cluster_tbl){
   }
 }
 
+#' @export
 merge_clusters <- function(df_cluster){
   cluster_lookup <-
     df_cluster %>%
@@ -80,12 +53,8 @@ merge_clusters <- function(df_cluster){
   df_cluster
 }
 
-# x <- function(){
-#   $xyz <- 2
-# }
 
-
-
+#' @export
 cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
   # message("------------Clustering------------")
   stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))

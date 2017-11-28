@@ -1,7 +1,9 @@
+#' @export
 get_weighted_sequence <- function(x, ...){
   UseMethod("get_weighted_sequence")
 }
 
+#' @export
 get_weighted_sequence.Sequence <- function(sequence_1, sequence_2) {
 
   w_sequence <-
@@ -26,6 +28,7 @@ get_weighted_sequence.Sequence <- function(sequence_1, sequence_2) {
   class_it(w_sequence, "W_Sequence")
 }
 
+#' @export
 get_weighted_sequence.W_Sequence <- function(w_sequence, sequence) {
 
   n <- attr(w_sequence,"n")
@@ -63,7 +66,7 @@ get_weighted_sequence.W_Sequence <- function(w_sequence, sequence) {
   class_it(w_sequence_new, "W_Sequence")
 }
 
-
+#' @export
 get_weighted_sequence.Sequence_List <- function(sequence_list,
                                                 fun = sorenson_distance){
 
@@ -91,6 +94,7 @@ get_weighted_sequence.Sequence_List <- function(sequence_list,
   }
 }
 
+#' @export
 get_weighted_sequence.Aggregated_Dataframe <- function(aggregated_dataframe,
                                                        fun = sorenson_distance){
 
@@ -100,6 +104,7 @@ get_weighted_sequence.Aggregated_Dataframe <- function(aggregated_dataframe,
   get_weighted_sequence(fun)
 }
 
+#' @export
 get_weighted_sequence.data.frame <- function(dataframe,
                                              fun = sorenson_distance){
   warning("Assuming that the dataframe you are using is pre-aggregated. If not, please use use the aggregate_sequences function.\n")
@@ -108,6 +113,7 @@ get_weighted_sequence.data.frame <- function(dataframe,
   get_weighted_sequence(fun)
 }
 
+#' @export
 get_weighted_sequence.Clustered_Dataframe <- function(df_clusters,
                                                       fun = sorenson_distance){
   df_clusters <-
@@ -127,10 +133,12 @@ get_weighted_sequence.Clustered_Dataframe <- function(df_clusters,
   df_clusters
 }
 
+#' @export
 align_sequences <- function(x, ...){
   UseMethod("align_sequences")
 }
 
+#' @export
 align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_distance) {
 
   distance_matrix <- inter_sequence_distance(sequence_1, sequence_2, fun)$distance_matrix
@@ -200,6 +208,7 @@ align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_dist
 
 }
 
+#' @export
 insert_blank_w_itemset <- function(w_sequence) {
   blank_w_itemset <- class_it(list(list(elements = "_",
                                   element_weights = 0,
@@ -208,7 +217,7 @@ insert_blank_w_itemset <- function(w_sequence) {
   append(w_sequence, blank_w_itemset, 0)
 }
 
-
+#' @export
 align_sequences.W_Sequence <- function(w_sequence,
                                       sequence,
                                       fun = sorenson_distance) {
@@ -360,7 +369,7 @@ align_sequences.W_Sequence <- function(w_sequence,
   w_sequence
 }
 
-
+#' @export
 format_sequence.W_Sequence <- function(w_sequence, html_format = FALSE){
   n <- attr(w_sequence, "n")
   if(html_format){
@@ -411,17 +420,20 @@ format_sequence.W_Sequence <- function(w_sequence, html_format = FALSE){
 
 }
 
+#' @export
 format_sequence.W_Sequence_List <- function(w_sequence_list, ...){
   map_chr(w_sequence_list, function(w_sequence){
     format_sequence(w_sequence, ...)
   })
 }
 
+#' @export
 print.W_Sequence <- function(w_sequence, ...){
   format_sequence(w_sequence) %>%
   cat()
 }
 
+#' @export
 print.W_Sequence_List <- function(w_sequence_list, ...){
   walk(w_sequence_list, function(w_sequence){
     cat(format_sequence(w_sequence), "\n")
