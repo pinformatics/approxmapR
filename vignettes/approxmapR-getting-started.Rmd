@@ -53,7 +53,7 @@ n_people <- length(unique(mvad$id))
 ```
 
 
-The base data is from the package `TraMineR` (it has been tweaked a little for our problem) and provides the employment status of `r n_people` individuals for each month from 1993 to 1998. Now you are interested in answering the question, "**What are the general sequences of employment that people go through?**". Since there are `n_people` people, it is not possible for us to decipher what the patterns are by visual inspection. Looking for exact sequences that are present in *all* these people will get us nowhere. 
+The base data is from the package `TraMineR` (it has been tweaked a little for our problem) and provides the employment status of `r n_people` individuals for each month from 1993 to 1998. Now you are interested in answering the question, "**What are the general sequences of employment that people go through?**". Since there are `r n_people` people, it is not possible for us to decipher what the patterns are by visual inspection. Looking for exact sequences that are present in *all* these people will get us nowhere. 
 
 So we need to methodically formulate the solution. Let's look at some key terms necessary for doing that:
 
@@ -133,23 +133,19 @@ mvad %>%
 We can also chain multiple `filter_pattern()` functions to keep adding patterns. 
 
 ```{r}
-mvad %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 3, summary_stats=FALSE) %>%
-    cluster_knn(k = 15) %>%
-      filter_pattern(threshold = 0.3, pattern_name = "variation") %>%
-        filter_pattern(threshold = 0.4, pattern_name = "consensus") 
+results <- 
+  mvad %>%
+    aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 3, summary_stats=FALSE) %>%
+      cluster_knn(k = 15) %>%
+        filter_pattern(threshold = 0.3, pattern_name = "variation") %>%
+          filter_pattern(threshold = 0.4, pattern_name = "consensus") 
 ```
 
 ##4. Formatted output
 Though all the algorithmic work is done, the output is hardly readable as the objects of interest are all present as classes. We have not "prettified" the output by design because concealing it would really inhibit additional explaratory possibilities. Instead, we have a simple function that can be called for this - `format_sequence()`
 
 ```{r}
-mvad %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 3, summary_stats=FALSE) %>%
-    cluster_knn(k = 15) %>%
-      filter_pattern(threshold = 0.3, pattern_name = "variation") %>%
-        filter_pattern(threshold = 0.4, pattern_name = "consensus") %>%
-          format_sequence() 
+results %>% format_sequence() 
 ```
 
 Since markdown by default limits the screen content the important output gets truncated. So I have used another paramter called `kable` which can be safely ignored if it doesn't make sense. 

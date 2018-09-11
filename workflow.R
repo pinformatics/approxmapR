@@ -1,7 +1,7 @@
 library(tidyverse)
 # library(TraMineR)
-library(stringr)
-library(lubridate)
+# library(stringr)
+# library(lubridate)
 
 data("mvad")
 df <- as_tibble(mvad)
@@ -15,6 +15,13 @@ agg_df <-
   df %>%
   mutate(event = str_to_lower(event)) %>%
     aggregate_sequences(format = "%Y-%m-%d", unit = "day", n_units = 1)
+
+read.csv("data/pre_agg_demo.csv", stringsAsFactors = F) %>%
+  mutate_if(is.numeric, as.integer) %>%
+  pre_aggregated() %>%
+  cluster_knn(k=1) %>%
+  filter_pattern(threshold = 0.4) %>%
+  format_sequence()
 
 k_vals <-
 tibble(k = k) %>%
