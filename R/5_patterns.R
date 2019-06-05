@@ -18,7 +18,6 @@ filter_pattern.W_Sequence_Dataframe <- function(df_w_sequences, pattern_name = "
   }
 
 
-  # expr <- enquo(pattern_name)
   pattern <- paste0(quo_name(pattern_name),"_pattern")
 
   df_pattern <-
@@ -34,6 +33,9 @@ filter_pattern.W_Sequence_Dataframe <- function(df_w_sequences, pattern_name = "
     select(cluster, n, !!pattern, everything(), -pat_name)
 
   class(df_pattern) <- class(df_w_sequences)
+
+  # print(attr(df_w_sequences$weighted_sequence[[1]], "alignments"))
+
 
   df_pattern
 }

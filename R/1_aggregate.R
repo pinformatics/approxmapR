@@ -332,7 +332,6 @@ print.Sequence <- function(sequence){
 #' sequences <- sequences$sequence
 #' print(sequences)
 print.Sequence_List <- function(sequences){
-  # print(sequences)
   if(is.null(names(sequences))){
     warning("id for the sequences not present")
     walk(sequences, function(sequence_obj){

@@ -96,6 +96,8 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
   }
 
 
+
+
   #step 1 - initialize every *unique* sequence as a cluster
   message("Initializing clusters...")
   df_cluster <-
@@ -175,6 +177,8 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
   df_cluster <- merge_clusters(df_cluster)
 
+  # browser()
+
   df_cluster <-
     df_cluster %>%
       group_by(cluster_id) %>%
@@ -190,6 +194,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
                    function(df_sequence){
                      class(df_sequence$sequence) <-
                        c("Sequence_List",class(df_sequence$sequence))
+                     names(df_sequence$sequence) <- df_sequence$id
                      df_sequence
                    })) %>%
       arrange(desc(n)) %>%

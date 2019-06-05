@@ -71,17 +71,22 @@ get_weighted_sequence.Sequence_List <- function(sequence_list,
                                                 fun = sorenson_distance){
 
   if(length(sequence_list) == 1) {
+    # browser()
     sequence <- sequence_list[[1]]
-    w_sequence <- vector(mode = "list", length(sequence))
+    w_sequence <- align_sequences(sequence,
+                                  sequence,
+                                  fun)
+
     for(i in 1:length(sequence)) {
-      w_sequence[[i]]$elements <- sequence[[i]]
       w_sequence[[i]]$itemset_weight <- 1
-      w_sequence[[i]]$element_weights <- rep(1,length(sequence[[i]]))
+      w_sequence[[i]]$element_weights <- (w_sequence[[i]]$element_weights)/2
     }
     attr(w_sequence, "n") <- 1
-    class_it(w_sequence, "W_Sequence")
+    alignments <-
+      attr(w_sequence, "alignments")[1]
 
   } else {
+    # browser()
     w_sequence <- align_sequences(sequence_list[[1]],sequence_list[[2]], fun)
 
     if(length(sequence_list) > 2) {
@@ -90,8 +95,16 @@ get_weighted_sequence.Sequence_List <- function(sequence_list,
         w_sequence <-  align_sequences(w_sequence, sequence_list[[i]], fun)
       }
     }
-    w_sequence
+
+    # browser()
+    alignments <- attr(w_sequence, "alignments")
   }
+
+  alignments <- class_it(alignments, "Sequence_List")
+  names(alignments) <- names(sequence_list)
+  attr(w_sequence, "alignments") <- alignments
+
+  w_sequence
 }
 
 #' @export
@@ -208,6 +221,7 @@ align_sequences.Sequence <- function(sequence_1, sequence_2, fun = sorenson_dist
 
 }
 
+
 #' @export
 insert_blank_w_itemset <- function(w_sequence) {
   blank_w_itemset <- class_it(list(list(elements = "_",
@@ -232,6 +246,8 @@ align_sequences.W_Sequence <- function(w_sequence,
 
   i <- length(sequence)+1
   j <- length(w_sequence)+1
+
+  emp <- class_it("_","Sequence_Itemset")
 
   backtrack <- function(i, j,
                         aligned_sequence,
@@ -269,7 +285,7 @@ align_sequences.W_Sequence <- function(w_sequence,
       } else if (distance_matrix[i,j] == distance_matrix[i, j-1] + 1)  {
 
         #is left plus cost?
-        aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
+        aligned_sequence <- append(aligned_sequence, emp, 0)
         aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
         if(length(aligned_alignments) == 0){
           aligned_alignments <- map(pre_alignments, j-1) %>% map(~list(.))
@@ -284,15 +300,21 @@ align_sequences.W_Sequence <- function(w_sequence,
         backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
 
       } else if (distance_matrix[i,j]==distance_matrix[i-1,j]+1) {
+        # browser()
 
         #is up plus cost
         aligned_w_sequence <- insert_blank_w_itemset(aligned_w_sequence)
         aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
         if(length(aligned_alignments) == 0){
-          aligned_alignments <- rep(list(class_it("_","Sequence_Itemset")),length(pre_alignments))
+          aligned_alignments <- rep(list(emp),length(pre_alignments))
         } else{
+
           aligned_alignments <- map(aligned_alignments,
-                                    ~append(list(.), class_it("_","Sequence_Itemset"), 0))
+                                    function(l){
+                                      l <- append(l, emp, 0)
+                                      class(l[[1]]) <- class(emp)
+                                      l
+                                    })
         }
 
         backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, aligned_alignments)
@@ -317,7 +339,7 @@ align_sequences.W_Sequence <- function(w_sequence,
       }
     } else if ((i==1) & (j>1)) {
 
-      aligned_sequence <- append(aligned_sequence, class_it("_","Sequence_Itemset"), 0)
+      aligned_sequence <- append(aligned_sequence, emp, 0)
       aligned_w_sequence <- append(aligned_w_sequence, w_sequence[j-1][1], 0)
       if(length(aligned_alignments) == 0){
         aligned_alignments <- map(pre_alignments, j-1) %>% map(~list(.))
@@ -332,12 +354,18 @@ align_sequences.W_Sequence <- function(w_sequence,
       backtrack(i, j - 1, aligned_sequence, aligned_w_sequence, aligned_alignments)
 
     } else if((j==1) & (i>1)) {
+      # browser()
       aligned_w_sequence <- insert_blank_w_itemset(aligned_w_sequence)
       aligned_sequence <- append(aligned_sequence, sequence[i-1][1], 0)
       if(length(aligned_alignments) == 0){
-        aligned_alignments <- rep(list(class_it("_","Sequence_Itemset")),length(pre_alignments))
+        aligned_alignments <- rep(list(emp),length(pre_alignments))
       } else{
-        aligned_alignments <- map(aligned_alignments, ~append(list(.), class_it("_","Sequence_Itemset"), 0))
+        aligned_alignments <- map(aligned_alignments,
+                                  function(l){
+                                    l <- append(l, emp, 0)
+                                    class(l[[1]]) <- class(emp)
+                                    l
+                                  })
       }
 
       backtrack(i - 1, j, aligned_sequence, aligned_w_sequence, aligned_alignments)

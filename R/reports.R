@@ -25,6 +25,9 @@ file_check <- function(dir = ".", file_name){
     as.integer()
 
     int <- int[!is.na(int)]
+    if(length(int) == 0){
+      int <- 0
+    }
 
     if(sum(is.na(int)) > 0) {
       paste0(file_part, "_1", extension)
@@ -83,6 +86,17 @@ generate_reports <- function(w_sequence_dataframe,
                                   title = "Weighted Sequences"),
                     output_file = file_check(output_directory_private,"weighted_sequences.html"),
                     output_dir = output_directory_private)
+
+  # output_directory_alignments <- create_folder(output_directory_private, "alignments")
+
+  message("saving alignments...")
+  w_sequence_dataframe %>%
+    save_alignment() %>%
+    write_file(paste0(output_directory_private, "/",
+                      file_check(output_directory_private, "alignments.csv")))
+
+
+  message("Reports generated.")
 
 }
 
@@ -186,5 +200,49 @@ generate_summary_stats_dup <- function(input_data,
     mutate(type = "count_items")
 
   bind_rows(n_sets_info, n_itemset_info, count_items_info)
+}
+
+
+#' @export
+print_alignments <- function(df){
+  wseqs <- df$weighted_sequence
+  # browser()
+  wseqs %>%
+    walk2(df$cluster, function(x, i){
+      # browser()
+      cat("\n\n")
+      cat(glue("Cluster {i}"))
+      cat("\n")
+      print(attr(x, "alignments"))
+    })
+}
+
+#' @export
+save_alignment <- function(x, ...){
+  UseMethod("save_alignment")
+}
+
+
+save_alignment.Sequence <- function(sequence){
+  sequence %>%
+    map_chr(function(x){
+      str_c('"', paste0(x, collapse = ", "), '"')
+    }) %>%
+    paste0(collapse = ", ")
+}
+
+save_alignment.Sequence_List <- function(alignment){
+  map2_chr(alignment, names(alignment), function(seq, id){
+    # browser()
+    str_c(id, ", ", save_alignment(seq), "\n")
+  }) %>%
+    str_c(collapse = "")
+}
+
+save_alignment.W_Sequence_Dataframe <- function(df){
+  map2_chr(df$cluster, df$weighted_sequence, function(c, seq){
+    str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments")))
+  }) %>%
+    str_c(collapse = "\n")
 }
 

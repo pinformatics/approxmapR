@@ -1,12 +1,35 @@
 library(tidyverse)
-# library(TraMineR)
-# library(stringr)
-# library(lubridate)
+library(glue)
 
 data("mvad")
-df <- as_tibble(mvad)
 
-mvad <- df
+
+agg <-
+  mvad %>%
+  arrange(id, period) %>%
+  mutate(event = str_to_lower(event)) %>%
+  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 24) %>%
+  cluster_knn(k=2)
+
+patterns <-
+  agg %>%
+  filter_pattern(threshold = 0.5, pattern_name = "consensus") %>%
+  filter_pattern(threshold = 0.3, pattern_name = "variation")
+
+
+patterns %>%
+  generate_reports()
+
+
+
+  patterns %>%
+  print_alignments()
+
+patterns %>%
+  save_alignment() %>%
+  write_file("alignments.csv")
+
+
 
 
 k <- 1:50
@@ -14,7 +37,7 @@ k <- 1:50
 agg_df <-
   df %>%
   mutate(event = str_to_lower(event)) %>%
-    aggregate_sequences(format = "%Y-%m-%d", unit = "day", n_units = 1)
+    aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 2)
 
 read.csv("data/pre_agg_demo.csv", stringsAsFactors = F) %>%
   mutate_if(is.numeric, as.integer) %>%
@@ -120,7 +143,7 @@ map_dbl(y2, length) %>%
   all_same()
 
 dem_aligned <-
-pre_agg_demo %>%
+  pre_agg_demo %>%
   pre_aggregated() %>%
   cluster_knn(k = 2) %>%
   get_weighted_sequence()
