@@ -411,7 +411,8 @@ format_sequence.W_Sequence <- function(w_sequence, html_format = FALSE){
                weight = as.integer(w_itemset$element_weights)) %>%
            mutate(
              ratio = weight/n,
-             color = colors[floor(ratio*n)],
+             i = ceiling(ratio),
+             color = map_chr(i, ~colors[.]),
              font_size = paste0(floor((1 + ratio * .6) * 100),"%"),
              font_weight = signif(460 + ratio * 340, 1),
              otag = str_c('<span style="',
