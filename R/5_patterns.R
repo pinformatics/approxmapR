@@ -112,7 +112,8 @@ format_sequence.W_Sequence_Pattern <- function(w_sequence_pattern, html_format =
                weight = as.integer(w_itemset$element_weights)) %>%
           mutate(
             ratio = weight/n,
-            color = colors[floor(ratio*n)],
+            # color = colors[floor(ratio*n)],
+            color = colors[weight],
             font_size = paste0(floor((1 + ratio * .6) * 100),"%"),
             font_weight = signif(460 + ratio * 340, 1),
             otag = str_c('<span style="',

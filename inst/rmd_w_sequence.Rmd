@@ -20,9 +20,24 @@ title: `r params$title`
 </style>
 
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width='100%'}
 library(knitr)
 library(kableExtra)
+
+perc <- c(1, (1:10)*10)
+wseq <- 
+  perc %>% 
+  map(function(x){
+    a <- list()
+    a$elements <- paste0(x,"%")
+    a$element_weights <- x
+    a$itemset_weights <- x
+    class_it(a, "W_Sequence_Itemset")
+  }) %>% 
+  class_it("W_Sequence_Pattern")
+attr(wseq, "n") <- 100
+
+wseq %>% view_formatted_sequence()
 
 df <- params$input
 

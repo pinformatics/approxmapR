@@ -40,7 +40,7 @@ file_check <- function(dir = ".", file_name){
 #' @export
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
-                             truncate_patterns = FALSE,
+                             # truncate_patterns = FALSE,
                              output_directory = "~",
                              folder = "approxmap_results"){
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
@@ -58,7 +58,21 @@ generate_reports <- function(w_sequence_dataframe,
     w_sequence_dataframe %>%
     format_sequence(compare = TRUE,
                     html_format = html_format,
-                    truncate_patterns = truncate_patterns)
+                    truncate_patterns = FALSE)
+
+  formatted_trunc <-
+    w_sequence_dataframe %>%
+    select(-weighted_sequence) %>%
+    format_sequence(compare = TRUE,
+                    html_format = html_format,
+                    truncate_patterns = TRUE) %>%
+    # filter(pattern != "weighted_sequence") %>%
+    mutate(pattern = pattern %>% str_c("_truncated"))
+
+  formatted <-
+    formatted %>%
+    bind_rows(formatted_trunc) %>%
+    arrange(cluster, pattern)
 
   rmarkdown::render(report_rmd,
                     params = list(input = formatted,
