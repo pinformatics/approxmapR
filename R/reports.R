@@ -111,8 +111,19 @@ generate_summary_stats <- function(input_data,
   n_unique_items <- input_data %>%
     pull(event) %>% unique() %>%
     length()
+
   cat(noquote(sprintf("The number of unique items is %i\n", n_unique_items)))
-  cat(print("The unique items are"))
+
+  items <-
+    mvad %>%
+    count(event) %>%
+    top_n(20,n) %>%
+    pull(event)
+
+
+  cat(noquote("The unique items are "))
+  # print
+  cat(str_c(items, collapse = ", "))
 
 
   cat(noquote("\nStatistics for the number of sets per sequence:\n"))
