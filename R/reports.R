@@ -112,6 +112,7 @@ generate_summary_stats <- function(input_data,
     pull(event) %>% unique() %>%
     length()
   cat(noquote(sprintf("The number of unique items is %i\n", n_unique_items)))
+  cat(print("The unique items are"))
 
 
   cat(noquote("\nStatistics for the number of sets per sequence:\n"))
