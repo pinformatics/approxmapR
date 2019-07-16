@@ -8,7 +8,10 @@ agg <-
   mvad %>%
   arrange(id, period) %>%
   mutate(event = str_to_lower(event)) %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 24) %>%
+  aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 24)
+
+cluster <-
+  agg %>%
   cluster_knn(k=2)
 
 patterns <-

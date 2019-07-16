@@ -24,6 +24,7 @@ Imports: Rcpp,
 Suggests: testthat,
     knitr,
     rmarkdown,
-    colormap
+    colormap,
+    kableExtra
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1

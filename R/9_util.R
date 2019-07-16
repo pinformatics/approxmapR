@@ -36,6 +36,11 @@ format_sequence.W_Sequence_Dataframe <- function(df,
 }
 
 #' @export
+view_formatted_sequence <- function(seq){
+  format_sequence(seq, html=TRUE) %>% stringr:::str_view_widget()
+}
+
+#' @export
 compare_sequences <- function(df){
   df %>%
     gather(-cluster, -n, -n_percent, key = "pattern", value = "sequence") %>%
