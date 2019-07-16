@@ -115,16 +115,24 @@ generate_summary_stats <- function(input_data,
   cat(noquote(sprintf("The number of unique items is %i\n", n_unique_items)))
 
   items <-
-    mvad %>%
-    count(event) %>%
+    input_data %>%
+    count(event, sort=T) %>%
     top_n(20,n) %>%
-    pull(event)
+    filter(n>5) %>%
+    mutate(n = n/max(n)) %>%
+    rename(relative_freq = n)
+    # pull(event)
 
+  # cat(noquote("The unique items are \n"))
+  # cat(str_c(items, collapse = ", "))
+  print(items)
 
-  cat(noquote("The unique items are "))
-  # print
-  cat(str_c(items, collapse = ", "))
+  n_seq <- input_data %>%
+    pull(id) %>%
+    unique() %>%
+    length()
 
+  cat(noquote(paste0("\nThe number of sequences are ", n_seq)))
 
   cat(noquote("\nStatistics for the number of sets per sequence:\n"))
   n_sets <-
