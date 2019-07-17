@@ -148,7 +148,7 @@ generate_summary_stats <- function(input_data,
 
   cat(noquote(paste0("\nThe number of sequences are ", n_seq)))
 
-  cat(noquote("\nStatistics for the number of sets per sequence:\n"))
+  cat(noquote("\n\nStatistics for the number of sets per sequence:\n"))
   n_sets <-
     input_data %>%
     select(id,period) %>%
