@@ -122,11 +122,18 @@ generate_summary_stats <- function(input_data,
 
   input_data <- as_tibble(input_data) %>% ungroup()
 
+  n_seq <- input_data %>%
+    pull(id) %>%
+    unique() %>%
+    length()
+
+  cat(noquote(paste0("The number of sequences are ", n_seq)))
+
   n_unique_items <- input_data %>%
     pull(event) %>% unique() %>%
     length()
 
-  cat(noquote(sprintf("The number of unique items is %i\n", n_unique_items)))
+  cat(noquote(sprintf("\n\nThe number of unique items is %i\n", n_unique_items)))
 
   items <-
     input_data %>%
@@ -134,21 +141,14 @@ generate_summary_stats <- function(input_data,
     top_n(20,n) %>%
     filter(n>5) %>%
     mutate(n = n/max(n)) %>%
-    rename(relative_freq = n)
+    rename(relative_freq = n, item = event)
     # pull(event)
 
   # cat(noquote("The unique items are \n"))
   # cat(str_c(items, collapse = ", "))
   print(items)
 
-  n_seq <- input_data %>%
-    pull(id) %>%
-    unique() %>%
-    length()
-
-  cat(noquote(paste0("\nThe number of sequences are ", n_seq)))
-
-  cat(noquote("\n\nStatistics for the number of sets per sequence:\n"))
+  cat(noquote("\nStatistics for the number of sets per sequence:\n"))
   n_sets <-
     input_data %>%
     select(id,period) %>%
@@ -158,7 +158,7 @@ generate_summary_stats <- function(input_data,
   print(summary(n_sets))
 
 
-  cat(noquote("\nStatistics for the number of items in a set\n"))
+  cat(noquote("\nStatistics for the number of items in a set:\n"))
   n_items_in_set <-
     input_data %>%
     group_by(id,period) %>%
@@ -167,7 +167,7 @@ generate_summary_stats <- function(input_data,
     pull(len)
   print(summary(n_items_in_set))
 
-  cat(noquote("\nFrequencies of items\n"))
+  cat(noquote("\nFrequencies of items:\n"))
   count_items <-
     input_data %>%
     count(event) %>%
