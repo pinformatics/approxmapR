@@ -15,7 +15,7 @@ cluster <-
   cluster_knn(k=2)
 
 patterns <-
-  agg %>%
+  cluster %>%
   filter_pattern(threshold = 0.5, pattern_name = "consensus") %>%
   filter_pattern(threshold = 0.3, pattern_name = "variation")
 
