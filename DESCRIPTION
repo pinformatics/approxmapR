@@ -25,7 +25,6 @@ Imports: Rcpp,
     knitr,
     rmarkdown,
     colormap,
-    kableExtra,
-    htmlwidgets
+    kableExtra
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
