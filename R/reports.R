@@ -127,7 +127,7 @@ generate_summary_stats <- function(input_data,
     unique() %>%
     length()
 
-  cat(noquote(paste0("The number of sequences are ", n_seq)))
+  cat(noquote(paste0("The number of sequences is ", n_seq)))
 
   n_unique_items <- input_data %>%
     pull(event) %>% unique() %>%
