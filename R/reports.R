@@ -1,35 +1,34 @@
 #' @export
-create_folder <- function(directory, folder){
+create_folder <- function(directory, folder) {
   output_directory = paste0(directory, "/", folder)
 
-  if(!dir.exists(output_directory)){
+  if (!dir.exists(output_directory)) {
     dir.create(output_directory)
   }
   output_directory
 }
 
 #' @export
-file_check <- function(dir = ".", file_name){
-
+file_check <- function(dir = ".", file_name) {
   files_exist <- list.files(path = dir)
-  file_part <- str_replace(file_name, "\\.[A-Za-z]*","")
-  extension <- str_replace(file_name, file_part,"")
+  file_part <- str_replace(file_name, "\\.[A-Za-z]*", "")
+  extension <- str_replace(file_name, file_part, "")
 
   files_exist <- files_exist[str_detect(files_exist, file_part)]
-  if(length(files_exist) == 0){
+  if (length(files_exist) == 0) {
     file_name
   } else {
     int <- str_replace(files_exist, file_part, "") %>%
-    str_replace("_","") %>%
-    str_replace(extension, "") %>%
-    as.integer()
+      str_replace("_", "") %>%
+      str_replace(extension, "") %>%
+      as.integer()
 
     int <- int[!is.na(int)]
-    if(length(int) == 0){
+    if (length(int) == 0) {
       int <- 0
     }
 
-    if(sum(is.na(int)) > 0) {
+    if (sum(is.na(int)) > 0) {
       paste0(file_part, "_1", extension)
     } else {
       paste0(file_part, "_", max(int) + 1, extension)
@@ -41,30 +40,37 @@ file_check <- function(dir = ".", file_name){
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
-                             output_directory = "~"){
+                             output_directory = "~") {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
 
   folder = "approxmap_results"
   output_directory <- create_folder(output_directory, folder)
-  output_directory_public <- create_folder(output_directory, "public")
-  output_directory_private <- create_folder(output_directory, "private")
+  output_directory_public <-
+    create_folder(output_directory, "public")
+  output_directory_private <-
+    create_folder(output_directory, "private")
 
-  report_rmd <- system.file("rmd_w_sequence.Rmd", package="approxmapR")
+  report_rmd <-
+    system.file("rmd_w_sequence.Rmd", package = "approxmapR")
 
 
 
   formatted <-
     w_sequence_dataframe %>%
-    format_sequence(compare = TRUE,
-                    html_format = html_format,
-                    truncate_patterns = FALSE)
+    format_sequence(
+      compare = TRUE,
+      html_format = html_format,
+      truncate_patterns = FALSE
+    )
 
   formatted_trunc <-
     w_sequence_dataframe %>%
     select(-weighted_sequence) %>%
-    format_sequence(compare = TRUE,
-                    html_format = html_format,
-                    truncate_patterns = TRUE) %>%
+    format_sequence(
+      compare = TRUE,
+      html_format = html_format,
+      truncate_patterns = TRUE
+    ) %>%
     # filter(pattern != "weighted_sequence") %>%
     mutate(pattern = pattern %>% str_c("_truncated"))
 
@@ -74,15 +80,15 @@ generate_reports <- function(w_sequence_dataframe,
       pattern = "unique_items",
       sequence =
         weighted_sequence %>%
-        map_chr(function(pattern){
+        map_chr(function(pattern) {
           pattern %>%
             map("elements") %>%
             unlist() %>%
             unique() %>%
             str_c(collapse = ", ")
-    }),
-    n = as.double(n),
-    n_percent = str_c(round(n/sum(n) * 100, digits = 2),"%")
+        }),
+      n = as.double(n),
+      n_percent = str_c(round(n / sum(n) * 100, digits = 2), "%")
     ) %>%
     select(-ends_with("_pattern"), -weighted_sequence, -df_sequences)
 
@@ -93,20 +99,24 @@ generate_reports <- function(w_sequence_dataframe,
     bind_rows(df_unique_items) %>%
     arrange(cluster)
 
-  rmarkdown::render(report_rmd,
-                    params = list(input = formatted,
-                                  title = "All Sequences"),
-                    output_file = file_check(output_directory_private,"all_sequences.html"),
-                    output_dir = output_directory_private)
+  rmarkdown::render(
+    report_rmd,
+    params = list(input = formatted,
+                  title = "All Sequences"),
+    output_file = file_check(output_directory_private, "all_sequences.html"),
+    output_dir = output_directory_private
+  )
   patterns <-
     formatted %>%
     filter(pattern != "weighted_sequence")
 
-  rmarkdown::render(report_rmd,
-                    params = list(input = patterns,
-                                  title = "Patterns"),
-                    output_file = file_check(output_directory_public, "patterns.html"),
-                    output_dir = output_directory_public)
+  rmarkdown::render(
+    report_rmd,
+    params = list(input = patterns,
+                  title = "Patterns"),
+    output_file = file_check(output_directory_public, "patterns.html"),
+    output_dir = output_directory_public
+  )
 
 
   w_sequences <-
@@ -114,19 +124,24 @@ generate_reports <- function(w_sequence_dataframe,
     filter(pattern == "weighted_sequence") %>%
     select(-pattern)
 
-  rmarkdown::render(report_rmd,
-                    params = list(input = w_sequences,
-                                  title = "Weighted Sequences"),
-                    output_file = file_check(output_directory_private,"weighted_sequences.html"),
-                    output_dir = output_directory_private)
+  rmarkdown::render(
+    report_rmd,
+    params = list(input = w_sequences,
+                  title = "Weighted Sequences"),
+    output_file = file_check(output_directory_private, "weighted_sequences.html"),
+    output_dir = output_directory_private
+  )
 
   # output_directory_alignments <- create_folder(output_directory_private, "alignments")
 
   message("saving alignments...")
   w_sequence_dataframe %>%
     save_alignment() %>%
-    write_file(paste0(output_directory_private, "/",
-                      file_check(output_directory_private, "alignments.csv")))
+    write_file(paste0(
+      output_directory_private,
+      "/",
+      file_check(output_directory_private, "alignments.csv")
+    ))
 
 
   message("Reports generated.")
@@ -137,8 +152,7 @@ generate_reports <- function(w_sequence_dataframe,
 generate_summary_stats <- function(input_data,
                                    results_directory = "~",
                                    noise_threshold = 0,
-                                   write_files = FALSE){
-
+                                   write_files = FALSE) {
   input_data <- as_tibble(input_data) %>% ungroup()
 
   n_seq <- input_data %>%
@@ -152,16 +166,18 @@ generate_summary_stats <- function(input_data,
     pull(event) %>% unique() %>%
     length()
 
-  cat(noquote(sprintf("\n\nThe number of unique items is %i\n", n_unique_items)))
+  cat(noquote(
+    sprintf("\n\nThe number of unique items is %i\n", n_unique_items)
+  ))
 
   items <-
     input_data %>%
-    count(event, sort=T) %>%
-    top_n(20,n) %>%
-    filter(n>5) %>%
-    mutate(n = n/max(n)) %>%
+    count(event, sort = T) %>%
+    top_n(20, n) %>%
+    filter(n > 5) %>%
+    mutate(n = n / max(n)) %>%
     rename(relative_freq = n, item = event)
-    # pull(event)
+  # pull(event)
 
   # cat(noquote("The unique items are \n"))
   # cat(str_c(items, collapse = ", "))
@@ -170,7 +186,7 @@ generate_summary_stats <- function(input_data,
   cat(noquote("\nStatistics for the number of sets per sequence:\n"))
   n_sets <-
     input_data %>%
-    select(id,period) %>%
+    select(id, period) %>%
     group_by(id) %>% unique() %>%
     summarise(len = n()) %>%
     pull(len)
@@ -180,7 +196,7 @@ generate_summary_stats <- function(input_data,
   cat(noquote("\nStatistics for the number of items in a set:\n"))
   n_items_in_set <-
     input_data %>%
-    group_by(id,period) %>%
+    group_by(id, period) %>%
     unique() %>%
     summarise(len = n()) %>%
     pull(len)
@@ -196,19 +212,20 @@ generate_summary_stats <- function(input_data,
   print(summary(count_items$n))
   cat("\n")
 
-  if(write_files){
-    results_directory <- paste0(results_directory,"/public")
-    if(!dir.exists(results_directory)) dir.create(results_directory)
-    write_csv(count_items,paste0(results_directory,"/count_items.csv"))
+  if (write_files) {
+    results_directory <- paste0(results_directory, "/public")
+    if (!dir.exists(results_directory))
+      dir.create(results_directory)
+    write_csv(count_items,
+              paste0(results_directory, "/count_items.csv"))
   }
 }
 
 #' @export
 generate_summary_stats_dup <- function(input_data,
-                                   results_directory = "~",
-                                   noise_threshold = 0,
-                                   write_files = FALSE){
-
+                                       results_directory = "~",
+                                       noise_threshold = 0,
+                                       write_files = FALSE) {
   input_data <- as_tibble(input_data) %>% ungroup()
 
   n_unique_items <- input_data %>%
@@ -217,20 +234,20 @@ generate_summary_stats_dup <- function(input_data,
 
   n_sets <-
     input_data %>%
-    select(id,period) %>%
+    select(id, period) %>%
     group_by(id) %>% unique() %>%
     summarise(len = n()) %>%
     pull(len)
 
   n_sets_info <-
-       summary(n_sets) %>%
-       broom::tidy() %>%
-       mutate(type = "set")
+    summary(n_sets) %>%
+    broom::tidy() %>%
+    mutate(type = "set")
 
 
   n_items_in_set <-
     input_data %>%
-    group_by(id,period) %>%
+    group_by(id, period) %>%
     unique() %>%
     summarise(len = n()) %>%
     pull(len)
@@ -257,11 +274,11 @@ generate_summary_stats_dup <- function(input_data,
 
 
 #' @export
-print_alignments <- function(df){
+print_alignments <- function(df) {
   wseqs <- df$weighted_sequence
   # browser()
   wseqs %>%
-    walk2(df$cluster, function(x, i){
+    walk2(df$cluster, function(x, i) {
       # browser()
       cat("\n\n")
       cat(glue("Cluster {i}"))
@@ -271,31 +288,30 @@ print_alignments <- function(df){
 }
 
 #' @export
-save_alignment <- function(x, ...){
+save_alignment <- function(x, ...) {
   UseMethod("save_alignment")
 }
 
 
-save_alignment.Sequence <- function(sequence){
+save_alignment.Sequence <- function(sequence) {
   sequence %>%
-    map_chr(function(x){
+    map_chr(function(x) {
       str_c('"', paste0(x, collapse = ", "), '"')
     }) %>%
     paste0(collapse = ", ")
 }
 
-save_alignment.Sequence_List <- function(alignment){
-  map2_chr(alignment, names(alignment), function(seq, id){
+save_alignment.Sequence_List <- function(alignment) {
+  map2_chr(alignment, names(alignment), function(seq, id) {
     # browser()
     str_c(id, ", ", save_alignment(seq), "\n")
   }) %>%
     str_c(collapse = "")
 }
 
-save_alignment.W_Sequence_Dataframe <- function(df){
-  map2_chr(df$cluster, df$weighted_sequence, function(c, seq){
+save_alignment.W_Sequence_Dataframe <- function(df) {
+  map2_chr(df$cluster, df$weighted_sequence, function(c, seq) {
     str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments")))
   }) %>%
     str_c(collapse = "\n")
 }
-
