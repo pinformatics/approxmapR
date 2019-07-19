@@ -1,6 +1,6 @@
 library(tidyverse)
 library(glue)
-
+library(approxmapR)
 data("mvad")
 
 
@@ -13,6 +13,10 @@ agg <-
 cluster <-
   agg %>%
   cluster_knn(k=2)
+
+cluster$n %>% sum()
+
+
 
 patterns <-
   cluster %>%

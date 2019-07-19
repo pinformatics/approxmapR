@@ -2,7 +2,7 @@
 calculate_density_info <- function(distance_matrix, k) {
   apply(distance_matrix, 2, function(distances){
     k_smallest_dist <- sort(distances, partial = k)[k]
-    nearest_neighbours <- distances <= k_smallest_dist
+    nearest_neighbours <- (distances <= k_smallest_dist)
     n = sum(nearest_neighbours, na.rm = T)
     density = n/k_smallest_dist
     list(density = density,
@@ -13,9 +13,15 @@ calculate_density_info <- function(distance_matrix, k) {
 
 #' @export
 cluster_lookup <- function(cluster_tbl){
-  tb <- cluster_tbl %>%
+
+  tb <-
+    cluster_tbl %>%
     select(cluster_id, cluster_merge) %>%
-      distinct()
+    distinct() %>%
+    add_count(cluster_id) %>%
+    filter(!((n>1)&(cluster_id == cluster_merge))) %>%
+    select(-n)
+
   cluster_lookup_vec <- tb$cluster_merge
   names(cluster_lookup_vec) <- tb$cluster_id
   tb_new <-
@@ -97,7 +103,6 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
 
-
   #step 1 - initialize every *unique* sequence as a cluster
   message("Initializing clusters...")
   df_cluster <-
@@ -130,14 +135,16 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
            cluster_merge =
              map2_int(density_info, cluster_id,
                       function(sequence_density_info, current_cluster){
+                        # browser()
                         density <- sequence_density_info$density
                         distances <- sequence_density_info$distances
 
-                        checks <- (sequence_density_info$nearest_neighbours) &
+                        checks <-
+                          (sequence_density_info$nearest_neighbours) &
                           (df_cluster$sequence_density > density) &
                           (df_cluster$cluster_id != current_cluster)
 
-                        if(sum(checks) != 0){
+                        if(any(checks)){
                           candidate_clusters <- df_cluster$cluster_id[checks]
                           candidate_clusters[order(distances[checks])][1]
                         } else {
@@ -148,14 +155,15 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
   df_cluster <- merge_clusters(df_cluster)
 
+  # browser()
   #step 3
   message("Resolving ties...")
   df_cluster <-
     df_cluster %>%
     mutate(cluster_merge = cluster_id,
            cluster_merge =
-             pmap_int(list(density_info, cluster_id, cluster_density),
-                      function(sequence_density_info, current_cluster, current_cluster_density){
+             pmap_int(list(density_info, cluster_id, cluster_density, cluster_id),
+                      function(sequence_density_info, current_cluster, current_cluster_density, id){
                         density <- sequence_density_info$density
                         distances <- sequence_density_info$distances
 
@@ -164,7 +172,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
                           (df_cluster$cluster_id != current_cluster) &
                           (df_cluster$cluster_density > current_cluster_density)
 
-                        if(sum(checks) != 0){
+                        if(any(checks)){
                           candidate_clusters <- df_cluster$cluster_id[checks]
                           candidate_clusters[order(distances[checks])][1]
                         } else {
@@ -177,7 +185,6 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
   df_cluster <- merge_clusters(df_cluster)
 
-  # browser()
 
   df_cluster <-
     df_cluster %>%
