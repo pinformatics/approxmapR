@@ -104,7 +104,8 @@ aggregate_sequences <- function(unaggregated_data,
                      occurence = min,
                      multiset = FALSE,
                      include_date = FALSE,
-                     summary_stats = TRUE) {
+                     summary_stats = TRUE,
+                     output_directory = "~") {
 
   n_days <- get_n_days(unit,n_units)
 
@@ -203,6 +204,14 @@ aggregate_sequences <- function(unaggregated_data,
   if(summary_stats){
     message("Generating summary statistics of aggregated data...")
     generate_summary_stats(aggregated_data)
+
+    output_directory <- create_folder(output_directory, "approxmap_results")
+    output_directory_public <- create_folder(output_directory, "public")
+    sink(paste0(output_directory_public, "/",
+                file_check(output_directory_public,
+                           "summary_text.txt")))
+    generate_summary_stats(aggregated_data)
+    sink()
   }
 
   # .GlobalEnv$env_report <- new.env()

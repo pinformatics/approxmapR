@@ -41,11 +41,10 @@ file_check <- function(dir = ".", file_name){
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
-                             output_directory = "~",
-                             folder = "approxmap_results"){
+                             output_directory = "~"){
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
 
-
+  folder = "approxmap_results"
   output_directory <- create_folder(output_directory, folder)
   output_directory_public <- create_folder(output_directory, "public")
   output_directory_private <- create_folder(output_directory, "private")
