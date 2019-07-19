@@ -68,10 +68,30 @@ generate_reports <- function(w_sequence_dataframe,
     # filter(pattern != "weighted_sequence") %>%
     mutate(pattern = pattern %>% str_c("_truncated"))
 
+  df_unique_items <-
+    w_sequence_dataframe %>%
+    mutate(
+      pattern = "unique_items",
+      sequence =
+        weighted_sequence %>%
+        map_chr(function(pattern){
+          pattern %>%
+            map("elements") %>%
+            unlist() %>%
+            unique() %>%
+            str_c(collapse = ", ")
+    }),
+    n = as.double(n),
+    n_percent = str_c(round(n/sum(n) * 100, digits = 2),"%")
+    ) %>%
+    select(-ends_with("_pattern"), -weighted_sequence, -df_sequences)
+
   formatted <-
     formatted %>%
     bind_rows(formatted_trunc) %>%
-    arrange(cluster, pattern)
+    arrange(cluster, pattern) %>%
+    bind_rows(df_unique_items) %>%
+    arrange(cluster)
 
   rmarkdown::render(report_rmd,
                     params = list(input = formatted,
