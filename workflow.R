@@ -13,7 +13,7 @@ agg <-
 
 cluster <-
   agg %>%
-  cluster_knn(k=2)
+  cluster_knn(k=3)
 
 cluster$n %>% sum()
 
