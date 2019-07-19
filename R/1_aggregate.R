@@ -1,6 +1,7 @@
 
 
 
+
 #' Aggregation functions
 #'
 #' A function used by \code{\link{aggregate_sequences}} to get
@@ -189,7 +190,6 @@ aggregate_sequences <-
             c("Aggregated_Dataframe", class(aggregated_data))
         if (summary_stats) {
             message("Generating summary statistics of aggregated data...")
-            generate_summary_stats(aggregated_data)
 
             output_directory <-
                 create_folder(output_directory, "approxmap_results")
@@ -199,7 +199,8 @@ aggregate_sequences <-
                 output_directory_public,
                 "/",
                 file_check(output_directory_public, "summary_text.txt")
-            ))
+            ),
+            split = TRUE)
             generate_summary_stats(aggregated_data)
             sink()
         }
@@ -243,7 +244,8 @@ convert_to_sequence <- function(df_seq) {
                                                                                                                          c("Sequence_Itemset", class(events))
                                                                                                                      events
                                                                                                                  })) %>% pull(seqs)
-                               class(seqs) <- c("Sequence", class(seqs))
+                               class(seqs) <-
+                                   c("Sequence", class(seqs))
                                seqs
                            }),
             sequence_formatted = map_chr(sequence, format_sequence)
