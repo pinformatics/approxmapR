@@ -118,8 +118,10 @@ NumericMatrix inter_sequence_distance_cpp(List sequences)
         distance_matrix(i,j) = distance_matrix(j,i);
       } else {
         distance_matrix(i,j) = dist_bw_sequences_cpp(sequences[i],sequences[j]);
+        p.increment();
+        p.increment();
       }
-      p.increment();
+
     }
   }
   return(distance_matrix);
