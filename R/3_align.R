@@ -490,7 +490,7 @@ format_sequence.W_Sequence <-
   function(w_sequence, html_format = FALSE) {
     n <- attr(w_sequence, "n")
     if (html_format) {
-      if(n >= 1){
+      if(n > 1){
         colors <-
           rev(colormap::colormap(colormap = "viridis", nshades = n) %>%
                 stringr::str_sub(1, -3))

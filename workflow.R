@@ -1,6 +1,6 @@
 library(tidyverse)
 library(glue)
-library(approxmapR)
+load_all(".")
 data("mvad")
 
 #http://web.cs.ucla.edu/~weiwang/paper/SDM03_2.pdf
@@ -13,7 +13,7 @@ agg <-
 
 cluster <-
   agg %>%
-  cluster_knn(k=3)
+  cluster_knn(k=1)
 
 cluster$n %>% sum()
 
@@ -21,16 +21,19 @@ cluster$n %>% sum()
 
 patterns <-
   cluster %>%
+  # filter(n < 4) %>%
+  # class_it("Clustered_Dataframe") %>%
   filter_pattern(threshold = 0.5, pattern_name = "consensus") %>%
   filter_pattern(threshold = 0.3, pattern_name = "variation")
 
 
 patterns %>%
+  filter(n < 2) %>% ungroup() %>% class_it("W_Sequence_Dataframe") %>%
   generate_reports()
 
 
 
-  patterns %>%
+patterns %>%
   print_alignments()
 
 patterns %>%
