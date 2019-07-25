@@ -150,6 +150,8 @@ all <- all %>% mutate(cfw = weighted_sequence %>% map2_int(cluster, function(x,y
 map_dbl(y2, length) %>%
   all_same()
 
+data("pre_agg_demo")
+
 dem_aligned <-
   pre_agg_demo %>%
   pre_aggregated() %>%
