@@ -11,6 +11,8 @@ params:
 title: `r params$title`
 ---
 
+<html>
+  <head>
 <style type="text/css">
 .main-container {
   max-width: 1800px;
@@ -18,7 +20,11 @@ title: `r params$title`
   margin-right: auto;
 }
 </style>
-<link href="priority.css" rel="stylesheet">
+<link type="text/css" href="priority.css" rel="stylesheet">
+  </head>
+  <body>
+    </body>
+     </html>
 
 
 ```{r, echo=FALSE, out.width='100%'}
