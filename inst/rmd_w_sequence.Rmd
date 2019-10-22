@@ -2,8 +2,6 @@
 output:
   html_document:
     css: priority.css
-    theme: null
-    highlight: null
 params:
   input: NA
   title: NA
