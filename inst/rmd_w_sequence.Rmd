@@ -18,6 +18,7 @@ title: `r params$title`
   margin-right: auto;
 }
 </style>
+<link href="priority.css" rel="stylesheet">
 
 
 ```{r, echo=FALSE, out.width='100%'}
