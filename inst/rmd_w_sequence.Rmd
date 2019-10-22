@@ -1,7 +1,9 @@
 ---
 output:
   html_document:
-    css: prioritya.css
+    css: priority.css
+    theme: null
+    highlight: null
 params:
   input: NA
   title: NA
