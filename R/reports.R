@@ -39,7 +39,7 @@ file_check <- function(dir = ".", file_name) {
 #' @export
 generate_reports <- function(w_sequence_dataframe,
                              cluster = "~",
-                             time = "~",
+                             time = "week",
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
                              output_directory = "~") {
