@@ -38,6 +38,8 @@ file_check <- function(dir = ".", file_name) {
 
 #' @export
 generate_reports <- function(w_sequence_dataframe,
+                             cluster,
+                             time,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
                              output_directory = "~") {
@@ -113,7 +115,7 @@ generate_reports <- function(w_sequence_dataframe,
   rmarkdown::render(
     report_rmd,
     params = list(input = patterns,
-                  title = "Patterns"),
+                  title = paste("Patterns, K = ",cluster,", Time = ",time,sep="")),
     output_file = file_check(output_directory_public, "patterns.html"),
     output_dir = output_directory_public
   )
@@ -127,7 +129,7 @@ generate_reports <- function(w_sequence_dataframe,
   rmarkdown::render(
     report_rmd,
     params = list(input = w_sequences,
-                  title = "Weighted Sequences"),
+                  title = paste("Weighted Sequences, K = ",cluster,", Time = ",time,sep="")),
     output_file = file_check(output_directory_private, "weighted_sequences.html"),
     output_dir = output_directory_private
   )
