@@ -38,8 +38,6 @@ file_check <- function(dir = ".", file_name) {
 
 #' @export
 generate_reports <- function(w_sequence_dataframe,
-                             cluster = "~",
-                             time = "~",
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
                              output_directory = "~") {
@@ -115,7 +113,7 @@ generate_reports <- function(w_sequence_dataframe,
   rmarkdown::render(
     report_rmd,
     params = list(input = patterns,
-                  title = paste("Patterns, K = ",cluster,", Time = ",time,sep="")),
+                  title = "Patterns"),
     output_file = file_check(output_directory_public, "patterns.html"),
     output_dir = output_directory_public
   )
