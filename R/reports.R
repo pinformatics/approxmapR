@@ -40,7 +40,7 @@ file_check <- function(dir = ".", file_name) {
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
-                             output_directory = "~") {
+                             output_directory = "~",K = 5) {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
 
   folder = "approxmap_results"
@@ -102,7 +102,8 @@ generate_reports <- function(w_sequence_dataframe,
   rmarkdown::render(
     report_rmd,
     params = list(input = formatted,
-                  title = "All Sequences"),
+                  title = "All Sequences",
+                  clusterK = K),
     output_file = file_check(output_directory_private, "all_sequences.html"),
     output_dir = output_directory_private
   )
