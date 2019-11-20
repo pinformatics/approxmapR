@@ -40,7 +40,7 @@ file_check <- function(dir = ".", file_name) {
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
-                             output_directory = "~",K = 5) {
+                             output_directory = "~",kval = "NA",times = "NA") {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
 
   folder = "approxmap_results"
@@ -103,7 +103,8 @@ generate_reports <- function(w_sequence_dataframe,
     report_rmd,
     params = list(input = formatted,
                   title = "All Sequences",
-                  clusterK = K),
+                 clusterK = kval,
+                 timeT = times),
     output_file = file_check(output_directory_private, "all_sequences.html"),
     output_dir = output_directory_private
   )
@@ -114,7 +115,9 @@ generate_reports <- function(w_sequence_dataframe,
   rmarkdown::render(
     report_rmd,
     params = list(input = patterns,
-                  title = "Patterns"),
+                  title = "Patterns",
+                 clusterK = kval,
+                 timeT = times),
     output_file = file_check(output_directory_public, "patterns.html"),
     output_dir = output_directory_public
   )
@@ -128,7 +131,9 @@ generate_reports <- function(w_sequence_dataframe,
   rmarkdown::render(
     report_rmd,
     params = list(input = w_sequences,
-                  title = "Weighted Sequences"),
+                  title = "Weighted Sequences",
+                 clusterK = kval,
+                 timeT = times),
     output_file = file_check(output_directory_private, "weighted_sequences.html"),
     output_dir = output_directory_private
   )
