@@ -2,6 +2,8 @@
 output:
   html_document:
     css: priority.css
+    includes:
+      after body: footer.html
 params:
   input: NA
   title: NA
