@@ -10,7 +10,9 @@ params:
 ---
 
 ---
-title: `r params$title`
+title: |
+  | `r params$title`
+  | "K = " `r params$clusterK`
 ---
 
 <style type="text/css">
