@@ -12,7 +12,7 @@ params:
 ---
 title: |
   | `r params$title`
-  | "K = " `r params$clusterK`
+  | K = `r params$clusterK`, time = `r params$timeT`
 ---
 
 <style type="text/css">
