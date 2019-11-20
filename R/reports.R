@@ -127,7 +127,7 @@ generate_reports <- function(w_sequence_dataframe,
   rmarkdown::render(
     report_rmd,
     params = list(input = w_sequences,
-                  title = "Weighted Sequences",
+                  title = "Weighted Sequences"),
     output_file = file_check(output_directory_private, "weighted_sequences.html"),
     output_dir = output_directory_private
   )
