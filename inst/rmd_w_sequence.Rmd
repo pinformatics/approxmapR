@@ -62,14 +62,4 @@ if(nrow(df) > 0){
 }
 
 ```
-<p style="text-align: left;">Care: MI = Mental Health Individual, MG = Mental Health Group, MO = Mental Health Other, XM = Not Mental Health</p>
-<p style="text-align: left;">Attendance: NS = No Show, AI = Inpatient Appointment, AT = Attend, CP = Cancelled by Patient, CC = Cancelled by Clinic</p>
 
-<hr />
-<p style="text-align: center;">Tool: ApproxMap</p>
-<p style="text-align: center;">Date Run: <sapn id="datetime"></span></p>
-<p style="text
-<script>
-	var dt = new Date();
-	document.getElementById("datetime").innerHTML = (("0"+(dt.getMonth()+1)).slice(-2)+"/"+(("0"+dt.getDate().slice(-2)+"/"+dt.getFullYear())+" "+ (("0"+dt.getHours()+1).slice(-2))+":"+(("0"+dt.getMinutes()+1).slice(-2));
-</script>
