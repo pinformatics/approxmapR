@@ -172,8 +172,7 @@ generate_summary_stats <- function(input_data,
 
   items <-
     input_data %>%
-    count(event) %>%
-    #count(event, sort = T) %>%
+    count(event, sort = T) %>%
     top_n(20, n) %>%
     filter(n > 5) %>%
     mutate(n = n / max(n)) %>%
