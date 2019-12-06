@@ -211,12 +211,12 @@ generate_summary_stats <- function(input_data,
 
   print(summary(count_items$n))
   cat("\n")
-  
+  count_items2 <- lapply(count_items, function(x){gsub(",",";",x)})
   if (write_files) {
     results_directory <- paste0(results_directory, "/public")
     if (!dir.exists(results_directory))
       dir.create(results_directory)
-    write_csv(count_items,
+    write_csv(count_items2,
               paste0(results_directory, "/count_items.csv"))
   }
 }
