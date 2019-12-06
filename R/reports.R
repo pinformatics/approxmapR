@@ -212,7 +212,7 @@ generate_summary_stats <- function(input_data,
   print(summary(count_items$n))
   cat("\n")
   
-  count_items2 <- data.frame(lapply(count_items,function(x) {gsub(",",";",x)}))
+  count_items2 <- lapply(count_items,function(x) {gsub(",",";",x)})
   if (write_files) {
     results_directory <- paste0(results_directory, "/public")
     if (!dir.exists(results_directory))
