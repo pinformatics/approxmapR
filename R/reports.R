@@ -135,7 +135,9 @@ generate_reports <- function(w_sequence_dataframe,
   # output_directory_alignments <- create_folder(output_directory_private, "alignments")
 
   message("saving alignments...")
-  w_sequence_dataframe %>%
+
+  w_sqeuence_dataframe2 <-  data.frame(lapply(w_sequence_dataframe, function(x){gsub(",",";",x)}))
+  w_sequence_dataframe2 %>%
     save_alignment() %>%
     write_file(paste0(
       output_directory_private,
@@ -211,12 +213,12 @@ generate_summary_stats <- function(input_data,
 
   print(summary(count_items$n))
   cat("\n")
-  count_items2 <- lapply(count_items, function(x){gsub(",",";",x)})
+
   if (write_files) {
     results_directory <- paste0(results_directory, "/public")
     if (!dir.exists(results_directory))
       dir.create(results_directory)
-    write_csv(count_items2,
+    write_csv(count_items,
               paste0(results_directory, "/count_items.csv"))
   }
 }
