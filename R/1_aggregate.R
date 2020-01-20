@@ -62,8 +62,6 @@ pre_aggregated <- function(df, summary_stats = TRUE) {
         generate_summary_stats(df)
     }
 
-    # .GlobalEnv$env_report <- new.env() .GlobalEnv$env_report$aggregated_data <- aggregated_data
-
     df
 }
 
@@ -115,33 +113,44 @@ aggregate_sequences <-
         unaggregated_data2 <-
             unaggregated_data %>% mutate(date = readr::parse_date(date, format))
 
+        .GlobalEnv$env_dates <- new.env()
+        .GlobalEnv$env_dates$df_unaggregated <- unaggregated_data2 %>% arrange(id,date)
+
         if (!is.na(anchor_table) || !is.na(anchor_vector)) {
             if (is.data.frame(anchor_table)) {
                 names(anchor_table) <- c("id", "anchor_date")
 
                 anchor_table <-
-                    anchor_table %>% mutate(anchor_date = readr::parse_date(anchor_date, format))
+                    anchor_table %>% mutate(anchor_date =
+                                                readr::parse_date(anchor_date, format))
 
             } else if (!is.na(anchor_vector)) {
                 anchor_table <-
-                    unaggregated_data2 %>% filter(event %in% anchor_vector) %>% group_by(id) %>%
+                    unaggregated_data2 %>% filter(event %in% anchor_vector) %>%
+                    group_by(id) %>%
                     summarise(anchor_date = min(date))
             }
 
             aggregated_data <-
-                unaggregated_data2 %>% left_join(anchor_table, by = "id") %>% group_by(id) %>%
+                unaggregated_data2 %>% left_join(anchor_table, by = "id") %>%
+                group_by(id) %>%
                 mutate(
                     n_ndays = (date - anchor_date) / n_days,
                     agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays),
                                           ceiling(n_ndays)),
                     agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)
                 ) %>% arrange(id,
-                              agg_n_ndays) %>% mutate(agg_period = dense_rank(agg_n_ndays))
+                              agg_n_ndays) %>% m
+            utate(agg_period = dense_rank(agg_n_ndays))
 
         } else if (calendar) {
             aggregated_data <-
-                unaggregated_data2 %>% mutate(agg_date = lubridate::floor_date(date, paste0(n_units,
-                                                                                            " ", unit, "s"))) %>% group_by(id) %>% mutate(agg_period = dense_rank(agg_date))
+                unaggregated_data2 %>%
+                mutate(agg_date = lubridate::floor_date(date,
+                                                        paste0(n_units,
+                                                               " ", unit, "s"))) %>%
+                group_by(id) %>%
+                mutate(agg_period = dense_rank(agg_date))
 
         } else if (!is.na(base_date)) {
             if (typeof(base_date) == "closure") {
@@ -155,16 +164,22 @@ aggregate_sequences <-
                                               0, floor(n_ndays), ceiling(n_ndays)),
                     agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)
                 ) %>%
-                group_by(id) %>% arrange(id, agg_n_ndays) %>% mutate(agg_period = dense_rank(agg_n_ndays))
+                group_by(id) %>% arrange(id, agg_n_ndays) %>%
+                mutate(agg_period = dense_rank(agg_n_ndays))
 
         } else {
             aggregated_data <-
-                unaggregated_data2 %>% group_by(id) %>% mutate(
+                unaggregated_data2 %>%
+                group_by(id) %>%
+                mutate(
                     n_ndays = (date - occurence(date)) / n_days,
                     agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays), ceiling(n_ndays)),
                     agg_n_ndays = if_else(agg_n_ndays ==
                                               0, 1, agg_n_ndays)
-                ) %>% arrange(id, agg_n_ndays) %>% mutate(agg_period = dense_rank(agg_n_ndays))
+                ) %>%
+                print() %>%
+                arrange(id, agg_n_ndays) %>%
+                mutate(agg_period = dense_rank(agg_n_ndays))
         }
 
 
@@ -178,12 +193,12 @@ aggregate_sequences <-
 
         if (include_date) {
             aggregated_data <-
-                aggregated_data %>% select(id, date, period = agg_period, event) %>% arrange(id,
-                                                                                             period, date, event)
+                aggregated_data %>% select(id, date, period = agg_period, event) %>%
+                arrange(id,period, date, event)
         } else {
             aggregated_data <-
-                aggregated_data %>% select(id, period = agg_period, event) %>% arrange(id, period,
-                                                                                       event)
+                aggregated_data %>% select(id, period = agg_period, event) %>%
+                arrange(id, period, event)
         }
 
         class(aggregated_data) <-
@@ -205,7 +220,6 @@ aggregate_sequences <-
             sink()
         }
 
-        # .GlobalEnv$env_report <- new.env() .GlobalEnv$env_report$aggregated_data <- aggregated_data
 
         aggregated_data
     }
@@ -230,20 +244,24 @@ convert_to_sequence <- function(df_seq) {
         warning("Are you sure the sequence dataframe you passed is already aggregated?")
     }
 
-    # since the items have to be aggregated into itemsets and itemsets, into sequences, this method has 2
+    # since the items have to be aggregated into itemsets and itemsets, into sequences,
+    # this method has 2
     # mutate calls to do that all while ensuring the classes are appropriately maintained
     df_seq <-
         df_seq %>% group_by(id) %>% nest(.key = "nested_id") %>% mutate(
             sequence = map(nested_id,
                            function(df_id) {
                                seqs <-
-                                   df_id %>% group_by(period) %>% nest(.key = "list_data") %>% mutate(seqs = map(list_data,
-                                                                                                                 function(itemset) {
-                                                                                                                     events <- itemset$event
-                                                                                                                     class(events) <-
-                                                                                                                         c("Sequence_Itemset", class(events))
-                                                                                                                     events
-                                                                                                                 })) %>% pull(seqs)
+                                   df_id %>% group_by(period) %>%
+                                   nest(.key = "list_data") %>%
+                                   mutate(seqs = map(list_data,
+                                                     function(itemset) {
+                                                         events <- itemset$event
+                                                         class(events) <-
+                                                             c("Sequence_Itemset",
+                                                               class(events))
+                                                         events
+                                                     })) %>% pull(seqs)
                                class(seqs) <-
                                    c("Sequence", class(seqs))
                                seqs

@@ -1,3 +1,4 @@
+library(devtools)
 library(tidyverse)
 library(glue)
 load_all(".")
@@ -9,11 +10,15 @@ agg <-
   mvad %>%
   arrange(id, period) %>%
   mutate(event = str_to_lower(event)) %>%
-  aggregate_sequences(format = "%Y-%m-%d", unit = "week", n_units = 1)
+  aggregate_sequences(format = "%Y-%m-%d",
+                      unit = "month",
+                      n_units = 24,
+                      # multiset = TRUE
+                      )
 
 cluster <-
   agg %>%
-  cluster_knn(k=1)
+  cluster_knn(k=10)
 
 cluster$n %>% sum()
 
@@ -28,7 +33,7 @@ patterns <-
 
 
 patterns %>%
-  filter(n < 2) %>% ungroup() %>% class_it("W_Sequence_Dataframe") %>%
+  # filter(n < 2) %>% ungroup() %>% class_it("W_Sequence_Dataframe") %>%
   generate_reports()
 
 

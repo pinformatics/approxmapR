@@ -136,12 +136,21 @@ generate_reports <- function(w_sequence_dataframe,
 
   message("saving alignments...")
   w_sequence_dataframe %>%
-    save_alignment() %>%
+    save_alignment(save_date=FALSE) %>%
     write_file(paste0(
       output_directory_private,
       "/",
       file_check(output_directory_private, "alignments.csv")
     ))
+
+  w_sequence_dataframe %>%
+    save_alignment(save_date=TRUE) %>%
+    write_file(paste0(
+      output_directory_private,
+      "/",
+      file_check(output_directory_private, "alignments_with_date.csv")
+    ))
+
 
 
   message("Reports generated.")
@@ -287,6 +296,26 @@ print_alignments <- function(df) {
     })
 }
 
+align_date_to_seq <- function(id, seq){
+  id_elements <- unlist(seq)
+
+  id_dates <-
+    env_dates$df_unaggregated %>%
+    filter(id == id) %>%
+    pull(date)
+
+  new_dates <- rep("_", length(id_elements))
+  new_date_index <- 1
+  for (i in seq(1, length(id_elements))) {
+    if (id_elements[i] != "_"){
+      new_dates[i] <- id_dates[new_date_index] %>% as.character()
+      new_date_index = new_date_index + 1
+    }
+  }
+
+  new_dates %>% str_c(collapse = ", ")
+}
+
 #' @export
 save_alignment <- function(x, ...) {
   UseMethod("save_alignment")
@@ -301,17 +330,22 @@ save_alignment.Sequence <- function(sequence) {
     paste0(collapse = ", ")
 }
 
-save_alignment.Sequence_List <- function(alignment) {
+save_alignment.Sequence_List <- function(alignment, save_date=TRUE) {
   map2_chr(alignment, names(alignment), function(seq, id) {
-    # browser()
-    str_c(id, ", ", save_alignment(seq), "\n")
+    seqs <- str_c(id, ", ", save_alignment(seq), "\n")
+    if(save_date){
+      dates <- str_c(id, ", ", align_date_to_seq(id, seq), "\n")
+      paste0(seqs, dates)
+    } else {
+      seqs
+    }
   }) %>%
     str_c(collapse = "")
 }
 
-save_alignment.W_Sequence_Dataframe <- function(df) {
+save_alignment.W_Sequence_Dataframe <- function(df, ...) {
   map2_chr(df$cluster, df$weighted_sequence, function(c, seq) {
-    str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments")))
+    str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments"), ...))
   }) %>%
     str_c(collapse = "\n")
 }

@@ -77,8 +77,96 @@ truncate_pattern.W_Sequence_Pattern <- function(w_sequence) {
         }
     }
     w_sequence[truncate_index] <- NULL
-    w_sequence
+
+    compressed_n <-
+        (truncate_index %>%
+             as.integer() %>%
+             as.character() %>%
+             str_c(collapse = "") %>%
+             str_split("0") %>%
+             pluck(1) %>%
+             str_subset(".") %>%
+             str_count("1")) + 1
+
+    for(i in seq(1,length(w_sequence))){
+        w_sequence[[i]]$itemset_weight <- compressed_n[i]
+    }
+
+
+    w_sequence %>% class_it("W_Sequence_Pattern_Compressed")
 }
+
+format_sequence.W_Sequence_Pattern_Compressed <-
+    function(w_sequence, html_format = FALSE) {
+        n <- attr(w_sequence, "n")
+        if (html_format) {
+            if(n > 1){
+                colors <-
+                    rev(colormap::colormap(colormap = "viridis", nshades = n) %>%
+                            stringr::str_sub(1, -3))
+            } else {
+                colors <- colormap::colormap(nshades = 2)[1]
+            }
+
+
+            # cuts <- floor(n*seq(0,1,0.2))[2:5]
+            w_sequence %>%
+                map_chr(function(w_itemset) {
+                    tibble(
+                        element = as.character(w_itemset$elements),
+                        weight = as.integer(w_itemset$element_weights)
+                    ) %>%
+                        mutate(
+                            ratio = weight / n,
+                            # i = ceiling(ratio),
+                            # color = map_chr(i, ~colors[.]),
+                            color = colors[weight],
+                            font_size = paste0(floor((1 + ratio * .6) * 100), "%"),
+                            font_weight = signif(460 + ratio * 340, 1),
+                            otag = str_c(
+                                '<span style="',
+                                "color: ",
+                                color,
+                                "; ",
+                                "font-size: ",
+                                font_size,
+                                "; ",
+                                "font-weight: ",
+                                font_weight,
+                                ";",
+                                '">'
+                            ),
+                            ctag = "</span>",
+                            element_html = str_c(otag, element, ":", weight, ctag)
+                        ) %>%
+                        pull(element_html) %>%
+                        str_c(collapse = ", ") %>%
+                        paste0("(", ., ")", ":", w_itemset$itemset_weight)
+                }) %>%
+                str_c(collapse = " ") %>%
+                paste0("<", ., ">", " : ", n) %>%
+                stringr::str_replace("<\\(", " < ( ")
+
+        } else{
+            w_sequence %>%
+                map_chr(function(w_itemset) {
+                    if (length(w_itemset$elements) > 0) {
+                        str_c(w_itemset$elements, ":", w_itemset$element_weights) %>%
+                            str_c(collapse = ", ") %>%
+                            paste0("(", ., ")", ":", w_itemset$itemset_weight)
+                    }
+                    else{
+                        NA
+                    }
+
+                }) %>%
+                .[!is.na(.)] %>%
+                str_c(collapse = " ") %>%
+                paste0("<", ., ">", " : ", n)
+        }
+
+    }
+
 
 #' @export
 w_sequence_to_tibble <- function(w_sequence) {
