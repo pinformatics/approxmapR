@@ -1,26 +1,26 @@
 
 priority5 {
   font-size: 100%;
-  color: #a3da37;
+  color: #e50014;
   font-weight: 460;
 }
 priority4 {
   font-size: 115%;
-  color: #55c467;
+  color: #ab073e;
   font-weight: 540;
 }
 priority3 {
   font-size: 130%;
-  color: #26a784;
+  color: #720e69;
   font-weight: 625;
 }
 priority2 {
   font-size: 145%;
-  color: #24888d;
+  color: #391594;
   font-weight: 710;
 }
 priority1 {
   font-size: 160%;
-  color: #31668d;
+  color: #001cbf;
   font-weight: 800;
 }

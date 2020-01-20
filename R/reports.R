@@ -135,6 +135,7 @@ generate_reports <- function(w_sequence_dataframe,
   # output_directory_alignments <- create_folder(output_directory_private, "alignments")
 
   message("saving alignments...")
+
   w_sequence_dataframe %>%
     save_alignment(save_date=FALSE) %>%
     write_file(paste0(
@@ -325,7 +326,7 @@ save_alignment <- function(x, ...) {
 save_alignment.Sequence <- function(sequence) {
   sequence %>%
     map_chr(function(x) {
-      str_c('"', paste0(x, collapse = ", "), '"')
+      str_c('"', paste0(x, collapse = "; "), '"')
     }) %>%
     paste0(collapse = ", ")
 }

@@ -173,12 +173,12 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
     df_cluster <- df_cluster %>% group_by(cluster_id) %>% arrange(desc(sequence_density)) %>% select(-sequence_density,
-        -density_info, -cluster_density, cluster = cluster_id) %>% nest(.key = df_sequences) %>% mutate(n = map_int(df_sequences,
+        -density_info, -cluster_density, cluster = cluster_id) %>% nest(df_sequences=c("id","sequence")) %>% mutate(n = map_int(df_sequences,
         nrow), df_sequences = map(df_sequences, function(df_sequence) {
         class(df_sequence$sequence) <- c("Sequence_List", class(df_sequence$sequence))
         names(df_sequence$sequence) <- df_sequence$id
         df_sequence
-    })) %>% arrange(desc(n)) %>% mutate(cluster = row_number())
+    })) %>% arrange(desc(n)) %>% ungroup() %>% mutate(cluster = row_number())
 
     class(df_cluster) <- c("Clustered_Dataframe", class(df_cluster))
 

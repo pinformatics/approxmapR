@@ -108,7 +108,7 @@ format_sequence.W_Sequence_Pattern <-
     if (html_format) {
       if(n > 1){
         colors <-
-          rev(colormap::colormap(colormap = "viridis", nshades = n) %>%
+          rev(colormap::colormap(colormap = "bluered", nshades = n) %>%
                 stringr::str_sub(1, -3))
       } else {
         colors <- colormap::colormap(nshades = 2)[1]
