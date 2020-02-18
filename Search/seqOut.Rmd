@@ -1,0 +1,93 @@
+---
+title: "Matched Sequences"
+output: html_document
+params: 
+    seqIn: 
+      label: "Search Sequence, Enter as: (A,B)(B)"
+      value: NA
+      input: text
+    prtEnd:
+      label: "How many rows would you like printed?"
+      value: 50
+      input: text
+---
+
+```{r setup, include=TRUE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r sts, echo = FALSE}
+setwd("//Users/michellemellers/Documents/1_PostDoc/2_VA_Sequence/test")
+library(stringr)
+source('searchSeq.R')
+##dataIn <- c("15","16","93")
+dataIn <- strsplit(params$seqIn,")")
+dataIn <- lapply(dataIn,function(dataIn) gsub("[(]","",dataIn))
+dataIn <- dataIn[[1]]
+dataIn <- strsplit(dataIn,",")
+##assign("dataIn",dataIn,envir=.GlobalEnv)
+##dataIn <- gsub("\\(","",result)
+  t10formz <- disTemp()
+  storez <- searchSeq(dataIn,t10formz)
+```
+
+### Summary Characteristics
+
+__Search Used:__ `r params$seqIn`  
+__Total Sequences Matched:__ `r nrow(storez)`
+
+
+```{r cars, echo=FALSE, results='asis'} 
+maxprt <- as.integer(params$prtEnd)
+if (nrow(storez)>maxprt) {
+  nums <- maxprt
+}else{
+  nums <- nrow(storez)
+  }
+``` 
+---------------------------------------------------
+The first `r nums` sequences are printed below.  
+Note: The output is limited to a max of `r maxprt` sequences as specified by the user.
+
+```{r outs, echo = FALSE}
+library(kableExtra)
+library(knitr)
+
+storez$eventF = character(length=length(storez$event))
+
+##total length
+totl <- 0
+for (ii in 1:length(dataIn)){
+  totl <- totl + length(dataIn[[ii]])
+} ## end find length
+for (mm in 1:length(storez$event)){
+  for (kk in 1:totl){
+    storez$event[[mm]][[storez$bolds[[mm]][[kk]][[1]]]][[storez$bolds[[mm]][[kk]][[2]]]] <- paste("**",storez$event[[mm]][[storez$bolds[[mm]][[kk]][[1]]]][[storez$bolds[[mm]][[kk]][[2]]]],"**",sep="")
+  } ## end of loop within the id line
+} ## end of length event  
+
+ for (k in 1:length(storez$event)){ 
+   tplst <-  vector(mode="list",length=length(storez$event))
+  for (m in 1:length(storez$event[[k]])){
+   tplst[[m]] <- paste("(",paste(storez$event[[k]][[m]],collapse=","),")",sep="") 
+  }
+  tplst <- plyr::compact(tplst)
+  tplst <- paste(tplst,collapse="")
+  storez$eventF[[k]] <- tplst
+ }
+
+storezSub <- storez %>% select(id,eventF) %>% rename(ID=id, Sequence=eventF)
+if (nrow(storezSub) > maxprt){
+  storezSub <- storezSub[1:maxprt,]
+} else {
+  storezSub <- storezSub
+}
+kable(storezSub, caption="Matched Results") %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold=T, border_right = T) %>%
+  column_spec(2,width="100em")
+
+```
+
+
