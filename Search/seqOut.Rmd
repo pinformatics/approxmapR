@@ -8,8 +8,16 @@ params:
       input: text
     prtEnd:
       label: "How many rows would you like printed?"
-      value: 50
+      value: 25
       input: text
+    setTme:
+      label: "Select Set Grouping Time Period:"
+      value: select
+      choices: [Week, Month]
+    clustTme:
+      label: "Select Display Time Period:"
+      value: select
+      choices: [Day, Week, Month]
 ---
 
 ```{r setup, include=TRUE, echo=FALSE}
@@ -18,10 +26,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r sts, echo = FALSE}
-setwd("//Users/michellemellers/Documents/1_PostDoc/2_VA_Sequence/test")
 library(stringr)
 source('searchSeq.R')
-##dataIn <- c("15","16","93")
+##dataIn <- c("(15,16),(93)")
 dataIn <- strsplit(params$seqIn,")")
 dataIn <- lapply(dataIn,function(dataIn) gsub("[(]","",dataIn))
 dataIn <- dataIn[[1]]
@@ -29,6 +36,13 @@ dataIn <- strsplit(dataIn,",")
 ##assign("dataIn",dataIn,envir=.GlobalEnv)
 ##dataIn <- gsub("\\(","",result)
   t10formz <- disTemp()
+  
+  if (params$setTme == 'Week') {unt = 7
+  }else if (params$setTme == 'Month'){unt = 30
+  }else{unt = -99}
+  firstdate = ymd(20000101)
+  
+  t10formz <- t10formz %>% mutate(periodSet = floor((ymd(period) - firstdate)/unt))
   storez <- searchSeq(dataIn,t10formz)
 ```
 
@@ -50,44 +64,81 @@ if (nrow(storez)>maxprt) {
 The first `r nums` sequences are printed below.  
 Note: The output is limited to a max of `r maxprt` sequences as specified by the user.
 
+The clustered time is `r params$setTme`.
+The displayed time is `r params$clustTme`.
+
+
 ```{r outs, echo = FALSE}
 library(kableExtra)
 library(knitr)
 
-storez$eventF = character(length=length(storez$event))
+if (length(storez$id) == 0){
+  lol = 0
+}else{
+firstdate <- ymd(20000101)
+storez$id <- as.numeric(storez$id)
+storez2 <- storez %>% left_join(.,t10formz,by="id") %>% select(id,period,event,periodSet)
+
+if (params$clustTme == 'Day'){unts = 1
+}else if (params$clustTme == 'Week') {unts = 7
+}else if (params$clustTme == 'Month'){unts = 30
+}else{unts = -99}
+
+storez2 <- storez2 %>% mutate(dt_sum = floor((ymd(period)-firstdate)/unts))
+storez2 <- lapply(split(storez2,storez2$id,drop=TRUE),function(x) split(x,x[['periodSet']],drop=TRUE)) 
+storez$eventF = character(length=length(storez$id))
+storez$eventT = character(length=length(storez$id))
+##storez$eventF = character(length=length(storez$id))
 
 ##total length
 totl <- 0
 for (ii in 1:length(dataIn)){
   totl <- totl + length(dataIn[[ii]])
 } ## end find length
-for (mm in 1:length(storez$event)){
+for (mm in 1:length(storez2)){
   for (kk in 1:totl){
-    storez$event[[mm]][[storez$bolds[[mm]][[kk]][[1]]]][[storez$bolds[[mm]][[kk]][[2]]]] <- paste("**",storez$event[[mm]][[storez$bolds[[mm]][[kk]][[1]]]][[storez$bolds[[mm]][[kk]][[2]]]],"**",sep="")
+    bds1 <- storez$bolds[[mm]][[kk]][[1]]
+    bds2 <- storez$bolds[[mm]][[kk]][[2]]
+    storez2[[mm]][[bds1]][bds2,'event'] <- paste("**",storez2[[mm]][[bds1]][bds2,'event'],"**",sep="")
   } ## end of loop within the id line
 } ## end of length event  
 
- for (k in 1:length(storez$event)){ 
-   tplst <-  vector(mode="list",length=length(storez$event))
-  for (m in 1:length(storez$event[[k]])){
-   tplst[[m]] <- paste("(",paste(storez$event[[k]][[m]],collapse=","),")",sep="") 
+ for (k in 1:length(storez2)){ 
+   tplst <-  vector(mode="list",length=length(storez$id))
+   tplstT <- vector(mode="list",length=length(storez$id))
+  for (m in 1:length(storez2[[k]])){
+   tplst[[m]] <- paste("(",paste(storez2[[k]][[m]]['event'],collapse=","),")",sep="") 
+   tplstT[[m]] <- paste("(",paste(storez2[[k]][[m]]['dt_sum'],collapse=","),")",sep="")
   }
   tplst <- plyr::compact(tplst)
   tplst <- paste(tplst,collapse="")
+  tplstT <- plyr::compact(tplstT)
+  tplstT <- paste(tplstT,collapse="")
   storez$eventF[[k]] <- tplst
+  storez$eventT[[k]] <- tplstT
  }
-
-storezSub <- storez %>% select(id,eventF) %>% rename(ID=id, Sequence=eventF)
-if (nrow(storezSub) > maxprt){
-  storezSub <- storezSub[1:maxprt,]
+storez$eventF <- gsub("c\\(","",storez$eventF)
+storez$eventF <- gsub("))",")",storez$eventF)
+storez$eventF <- gsub('"',"",storez$eventF)
+storez$eventT <- gsub("c\\(","",storez$eventT)
+storez$eventT <- gsub("))",")",storez$eventT)
+storez$eventT <- gsub('"',"",storez$eventT)
+storezSub <- storez %>%
+    select(id,eventF,eventT) %>% rename(ID=id,Sequence=eventF,Time=eventT) %>%
+    gather(.,Type,Sequences,Sequence:Time,factor_key=TRUE) %>% arrange(ID,Type)
+if (nrow(storezSub) > (maxprt*2)){
+  storezSub <- storezSub[1:(maxprt*2),]
 } else {
   storezSub <- storezSub
 }
 kable(storezSub, caption="Matched Results") %>%
-  kable_styling(full_width = F) %>%
+  kable_styling(full_width = F,bootstrap_options = c("striped","hover","condensed")) %>%
   column_spec(1, bold=T, border_right = T) %>%
-  column_spec(2,width="100em")
+  column_spec(2,border_right = T) %>% 
+  column_spec(3,width="80em") %>%
+  collapse_rows(columns=1,valign ="middle")
 
+} ## end else
 ```
 
 
