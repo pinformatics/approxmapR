@@ -1,4 +1,4 @@
-test##################################################################################
+##################################################################################
 ##
 ## Name: searchSeq.R
 ## Description: This file provides a search function for sequences within a dataset.
@@ -14,18 +14,25 @@ disTemp <- function(){
   
   t10 <- read.table("./t10.data")
   
+  set.seed(1)
+  for (i in(1:length(t10$V2))){
+    t10$delta[i] <- round(rexp(n=1,rate=0.2))
+  }
+  
   ## rename data
   t10F <- t10 %>% 
     rename("randomID"="V1","event"="V3") %>%
     group_by(randomID) %>%
     arrange(randomID,V2) %>% 
-    mutate(dt_sum = (V2 - min(V2))*7,event=as.character(event)) %>% 
+    mutate(dt_sum = ((V2 - min(V2))*7+delta),event=as.character(event)) %>% ## add a delta by 0 to 21 weeks, random generation, have most clustered around 0 and less clustered around 21
    select(c(-V2))
+  
+  set.seed(1)
   
   ## modify so numbers start from 0 for each person
   
   ## format the data to run in the function
-  first_date = ymd(20000101)
+  first_date = ymd(20000101) ## add a delta, bounded by 3 months
   dataFs <-
     t10F %>%
     select(randomID,dt_sum,event) %>%
@@ -42,75 +49,75 @@ disTemp <- function(){
 ######################################################################
 ## format the data
 
-formatData <- function(dataF){
-
-  require(tidyverse)
-  
-## sort the data
-  dataF <- dataF %>% arrange(id,period)
-  
-## basic formatting guideline  
-dataF$periodP <- integer(length(dataF$period))
-dataF$idP <- integer(length(dataF$id))
-for (i in 2:length(dataF$event)){
-  dataF$periodP[i] <- dataF$period[i-1] 
-  dataF$idP[i] <- dataF$id[i-1]
-}
-dataF$periodP[1] <- dataF$period[1]
-dataF$idP[1] <- dataF$id[1]
-
-## first dataset loop
-len <- dataF %>% group_by(id) %>% mutate(count=length(unique(event))) %>% 
-  ungroup() %>% distinct(id,.keep_all=TRUE) %>% select(id,count) %>%
-  summarize(sums=sum(count))
-dataF <- dataF %>% arrange(id,period)
-out <- tibble(id=numeric(length=len$sums),idP=numeric(length=len$sums),events=vector(mode="list",length=len$sums))
-
-k=1
-for (n in 1:len$sums){
-  m=2
-  la <- vector(mode="list",length=length(dataF$event))
-  la[[1]] <- dataF$event[k]
-  if(k == length(dataF$id)){break}else{k=k+1}
-  while ((dataF$idP[k] == dataF$id[k])&&(dataF$periodP[k] == dataF$period[k])){
-    la[[m]] <- dataF$event[k]
-    m = m+1
-    if(k == length(dataF$id)){break}else{k=k+1}
-  }
-  la <- plyr::compact(la)
-  out$events[[n]] <- la
-  out$id[n] <- dataF$idP[k]
-}
-
-out$idP[1] <- out$id[1]
-for (i in 2:length(out$id)){
-  out$idP[i] <- out$id[i-1]
-}
-
-## second dataset loop
-outt <- out[which(lapply(out$events,length)>0),]
-k=1
-out2 <- tibble(id=numeric(length=length(unique(outt$id))),events=vector(mode="list",length=length(unique(outt$id))))
-for (n in 1:length(unique(outt$id))){
-  m=2
-  la <- vector(mode="list",length=length(outt$events))
-  la[1] <- outt$events[k]
-  ##k=k+1
-  if(k == length(outt$id)){break}else{k=k+1}
-  while (outt$idP[k] == outt$id[k]){
-    la[m] <- outt$events[k]
-    m = m+1
-    ##k = k+1
-    if(k == length(outt$id)){break}else{k=k+1}
-  }
-  la <- plyr::compact(la)
-  out2$events[[n]] <- la
-  out2$id[[n]] <- outt$idP[k]
-}
-out2 <- out2 %>% rename(event=events)
-return(out2)
-
-} ## end function
+# formatData <- function(dataF){
+# 
+#   require(tidyverse)
+#   
+# ## sort the data
+#   dataF <- dataF %>% arrange(id,period)
+#   
+# ## basic formatting guideline  
+# dataF$periodP <- integer(length(dataF$period))
+# dataF$idP <- integer(length(dataF$id))
+# for (i in 2:length(dataF$event)){
+#   dataF$periodP[i] <- dataF$period[i-1] 
+#   dataF$idP[i] <- dataF$id[i-1]
+# }
+# dataF$periodP[1] <- dataF$period[1]
+# dataF$idP[1] <- dataF$id[1]
+# 
+# ## first dataset loop
+# len <- dataF %>% group_by(id) %>% mutate(count=length(unique(event))) %>% 
+#   ungroup() %>% distinct(id,.keep_all=TRUE) %>% select(id,count) %>%
+#   summarize(sums=sum(count))
+# dataF <- dataF %>% arrange(id,period)
+# out <- tibble(id=numeric(length=len$sums),idP=numeric(length=len$sums),events=vector(mode="list",length=len$sums))
+# 
+# k=1
+# for (n in 1:len$sums){
+#   m=2
+#   la <- vector(mode="list",length=length(dataF$event))
+#   la[[1]] <- dataF$event[k]
+#   if(k == length(dataF$id)){break}else{k=k+1}
+#   while ((dataF$idP[k] == dataF$id[k])&&(dataF$periodP[k] == dataF$period[k])){
+#     la[[m]] <- dataF$event[k]
+#     m = m+1
+#     if(k == length(dataF$id)){break}else{k=k+1}
+#   }
+#   la <- plyr::compact(la)
+#   out$events[[n]] <- la
+#   out$id[n] <- dataF$idP[k]
+# }
+# 
+# out$idP[1] <- out$id[1]
+# for (i in 2:length(out$id)){
+#   out$idP[i] <- out$id[i-1]
+# }
+# 
+# ## second dataset loop
+# outt <- out[which(lapply(out$events,length)>0),]
+# k=1
+# out2 <- tibble(id=numeric(length=length(unique(outt$id))),events=vector(mode="list",length=length(unique(outt$id))))
+# for (n in 1:length(unique(outt$id))){
+#   m=2
+#   la <- vector(mode="list",length=length(outt$events))
+#   la[1] <- outt$events[k]
+#   ##k=k+1
+#   if(k == length(outt$id)){break}else{k=k+1}
+#   while (outt$idP[k] == outt$id[k]){
+#     la[m] <- outt$events[k]
+#     m = m+1
+#     ##k = k+1
+#     if(k == length(outt$id)){break}else{k=k+1}
+#   }
+#   la <- plyr::compact(la)
+#   out2$events[[n]] <- la
+#   out2$id[[n]] <- outt$idP[k]
+# }
+# out2 <- out2 %>% rename(event=events)
+# return(out2)
+# 
+# } ## end function
 
 ## test
 ## rand <- formatData(dataF2)
@@ -118,7 +125,7 @@ return(out2)
 ###################################################################
 ## search sequence
 
-## cluster by week
+## clusters
 searchSeq <- function(dataIn,evtIn){
   
   require(tidyverse)
@@ -127,8 +134,11 @@ searchSeq <- function(dataIn,evtIn){
   ## initialize count variables
   counts = 0
 
+    ##periodSet = ceiling((as.Date(.$period)-firstdate)/unts))
+  
   ## format the data
-  evt <- formatData(evtIn)
+  ## evts <- as.data.frame(evtIn)
+  evt <- lapply(split(evtIn,evtIn$id,drop=TRUE),function(x) split(x,x[['periodSet']],drop=TRUE)) 
   
   ## format the data
 ##  evtIn <- evtIn %>% group_by(id) %>% arrange(period,.by_group=TRUE)
@@ -143,27 +153,26 @@ searchSeq <- function(dataIn,evtIn){
   
   ## list location of the match
   locMatch <-  vector(mode="list",length = totl)
-  store = tibble(id=numeric(),locMtch=vector(mode="list"))
+  store = tibble(id=character(),locMtch=vector(mode="list"))
   
   ## step through all sequences
-  for (i in 1:length(evt$event)){
+  for (i in 1:length(evt)){
     counts = 0
     outcts = 1
-    jj = 1
-    locMatch <- vector(mode="list",length=0)
+    locMatchF <- vector(mode="list",length=0)
     
     ## step within the list
-    for (k in 1:length(evt$event[[i]])){
+    for (k in 1:length(evt[[i]])){
       
       subcts = 0
       if ((counts >= totl)|(outcts > length(dataIn))){
         break
       } ## counts = counts + 1## end if
-      
+      locMatch <- vector(mode="list",length=0)
       ## determine if within each set
-      for (m in 1:length(evt$event[[i]][[k]])){
+      for (m in 1:nrow(evt[[i]][[k]])){
 
-        if (evt$event[[i]][[k]][[m]] == dataIn[[outcts]][[subcts+1]]){
+        if (evt[[i]][[k]][m,'event'] == dataIn[[outcts]][[subcts+1]]){
           subcts = subcts + 1
           locMatch[[1+length(locMatch)]] <- list(k,m)
           ##locMatch <- append(locMatch,paste(k,",",m,sep=""))
@@ -171,6 +180,7 @@ searchSeq <- function(dataIn,evtIn){
           if (subcts == length(dataIn[[outcts]])){
             outcts = outcts + 1
             counts = counts + subcts
+            locMatchF = append(locMatchF,locMatch)
             break
           }
         } ## end if
@@ -178,22 +188,19 @@ searchSeq <- function(dataIn,evtIn){
       } ## end for within sets
       
     } ## end for within sequences
-    locMatch <- list(locMatch)
+    locMatchF <- list(locMatchF)
     ## store if find match within sequence
     if (counts == totl){
-      store <- bind_rows(store,tibble(id=evt$id[[i]],locMtch=locMatch))
+      store <- bind_rows(store,tibble(id=names(evt[i]),locMtch=locMatchF))
     } ## end if 
     
   } ## end for loop for between sequences
-
+  
   ##store$id <- as.numeric(store$id)
   names(store) <- c("id","bolds")
-  
   ##evt2 <- tibble(id=matrix(unlist(evt$id),nrow=length(evt$id)),
   ##               event=as.list(evt$event))##,nrowbyrow=T),stringsAsFactors=FALSE)
   
-  ## merge in with sequence data
-  store <- store %>% left_join(.,evt,by=c("id"))
   ##evt <<- evt
  return(store)
  
@@ -204,10 +211,10 @@ searchSeq <- function(dataIn,evtIn){
 ## evtIn, should be of the form: eventIn <- formatted data from approxMap
 
 ## create a dataIn
-##dataIn = c("15","16","62")
+##dataIn = list(list("15","16"),list("15"))
 
 ## test function
-##storez <- searchSeq(dataIn,dataF)
+#teps <- searchSeq(dataIn,t10formz)
 
 ######################################################################
   
