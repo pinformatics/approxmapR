@@ -23,9 +23,12 @@ filter_pattern.W_Sequence_Dataframe <-
     df_pattern <-
       df_w_sequences %>%
       mutate(pat_name = structure(
-        map(weighted_sequence, filter_pattern, ... = ...),
-        class = c("W_Sequence_List")
-      ))
+                          map(weighted_sequence, filter_pattern, ... = ...)
+                          # Commented out the two lines below on 11.2.2020
+                          #,
+                          #class = c("W_Sequence_List")
+                        )
+    )
 
     df_pattern$pat_name = class_it(df_pattern$pat_name, "W_Sequence_Pattern_List")
 
