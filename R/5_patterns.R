@@ -27,6 +27,7 @@ filter_pattern.W_Sequence_Dataframe <-
                           # Commented out the two lines below on 11.2.2020
                           #,
                           #class = c("W_Sequence_List")
+                          #
                         )
     )
 
