@@ -186,3 +186,45 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
     df_cluster
 }
+
+
+
+
+#' @export
+cluster_kmedoids <- function(df_aggregated, k) {
+
+  df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+
+  message("Calculating distance matrix...")
+  distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+  distance_matrix[is.na(distance_matrix)] = 0
+
+
+  message("Clustering Based on PAM Algorithm")
+  res <- pam(distance_matrix, k = k, diss = TRUE)
+
+
+  df_cluster$cluster_id <- res$cluster
+
+
+
+  df_cluster <- df_cluster %>%
+                  group_by(cluster_id) %>%
+                  select(-sequence_formatted, cluster = cluster_id) %>%
+                  nest(df_sequences=c("id","sequence")) %>%
+                  mutate(n = map_int(df_sequences, nrow),
+                         df_sequences = map(df_sequences, function(df_sequence) {
+                           class(df_sequence$sequence) <- c("Sequence_List", class(df_sequence$sequence))
+                           names(df_sequence$sequence) <- df_sequence$id
+                           df_sequence
+                  })) %>%
+                  arrange(desc(n)) %>%
+                  ungroup() #%>%                   mutate(cluster = row_number())
+
+  class(df_cluster) <- c("Clustered_Dataframe", class(df_cluster))
+
+  message("----------Done Clustering----------")
+
+  df_cluster
+
+}
