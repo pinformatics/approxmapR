@@ -1,11 +1,12 @@
 Package: approxmapR
 Type: Package
-Title: What the Package Does (Title Case)
+Title: ApproxMAP (APPROXimate Multiple Alignment Pattern)
 Version: 0.1.1
-Author: Development Team
+Author: Hye Chung Kum, Corey Bryant, and the approxmapR Development Team
 Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: ApproxMAP (APPROXimate Multiple Alignment Pattern).
+    Is an efficient and effective mining algorithm which finds maximal
+    approximate sequential patterns.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
@@ -27,6 +28,7 @@ Imports: Rcpp,
     colormap,
     kableExtra,
     igraph,
-    htmlwidgets
+    htmlwidgets,
+    cluster
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
