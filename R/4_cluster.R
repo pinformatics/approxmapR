@@ -191,13 +191,15 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
 #' @export
-cluster_kmedoids <- function(df_aggregated, k) {
+cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
   df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
 
-  message("Calculating distance matrix...")
+  #message("Calculating distance matrix...")
   distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
   distance_matrix[is.na(distance_matrix)] = 0
+
+
 
 
   message("Clustering Based on PAM Algorithm")

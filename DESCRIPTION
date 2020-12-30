@@ -1,8 +1,8 @@
 Package: approxmapR
 Type: Package
 Title: ApproxMAP (APPROXimate Multiple Alignment Pattern)
-Version: 0.1.1
-Author: Hye Chung Kum, Corey Bryant, and the approxmapR Development Team
+Version: 0.1.2
+Author: Gurudev Ilngovan, Corey Bryant, and Hye Chung Kum.
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: ApproxMAP (APPROXimate Multiple Alignment Pattern).
     Is an efficient and effective mining algorithm which finds maximal
