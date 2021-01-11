@@ -358,3 +358,38 @@ save_alignment.W_Sequence_Dataframe <- function(df, ...) {
   }) %>%
     str_c(collapse = "\n")
 }
+
+
+
+#' @export
+algorithm_comparison <- function(formatted1, formatted1_pars = "No Pars1",
+                                 formatted2, formatted2_pars = "No Pars2",
+                                 formatted3, formatted3_pars = "No Pars2",
+                                 approxmapR_results = "~",
+                                 output_directory = "~",
+                                 file_name = "algorithm-comparison") {
+
+  report_rmd <- system.file("algo_compar.Rmd", package = "approxmapR")
+
+  rmarkdown::render(
+
+    report_rmd,
+
+    params = list(formatted1 = formatted1,
+                  formatted1_pars = formatted1_pars,
+
+                  formatted2 = formatted2,
+                  formatted2_pars = formatted2_pars,
+
+                  formatted3 = formatted3,
+                  formatted3_pars = formatted3_pars,
+
+                  approxmapR_results = approxmapR_results),
+
+    output_file = file_check(output_directory, paste0(file_name, ".html")),
+    output_dir = output_directory
+
+
+  )
+
+}

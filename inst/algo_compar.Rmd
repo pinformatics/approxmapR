@@ -1,0 +1,46 @@
+---
+title: "Algorithm Comparison"
+output: html_document
+params:
+  formatted1: NA 
+  formatted1_pars: NA
+  formatted2: NA 
+  formatted2_pars: NA
+  formatted3: NA 
+  formatted3_pars: NA
+  approxmapR_results: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Meta Information
+
+Algorithms being compared are `r formatted1_pars$algo` and `r formatted2_pars$algo`.
+The parameters set for each algorithm are as follows:
+
+* `r formatted1_pars$algo`: k = `r formatted1_pars$k` with the `r formatted1_pars$pattern` filter pattern being used at the threshold of `r formatted1_pars$threshold * 100`%.
+* `r formatted2_pars$algo`: k = `r formatted2_pars$k` with the `r formatted2_pars$pattern` filter pattern being used at the threshold of `r formatted2_pars$threshold * 100`%.
+
+
+
+### Comparison
+
+The `r formatted1_pars$algo` identified `r dim(params$formatted1)[1]` clusters while the `r formatted2_pars$algo` algorithm partitioned the data into the set `r params$formatted2_pars$k` clusters. The largest `r formatted1_pars$algo` cluster had `r params$formatted1$n[[1]]` sequences which represents `r params$formatted1$n_percent[[1]]` of all sequences within the data with the resulting `r params$formatted1_pars$pattern` being `r params$formatted1[1, c(4)]`. The largest `r formatted2_pars$algo` cluster had `r params$formatted2$n[[1]]` sequences which represents `r params$formatted2$n_percent[[1]]` of all sequences within the data with the resulting `r params$formatted2_pars$pattern` being `r params$formatted2[1, c(4)]`.
+
+Running the approxmapR algorithm on the consensus patterns produced by both algorithms
+using the following parameters:
+
+* `r formatted3_pars$algo`: k = `r formatted3_pars$k` with the `r formatted3_pars$pattern` filter pattern being used at the threshold of `r formatted3_pars$threshold * 100`%
+
+Resulted in the following:
+
+```{r} 
+
+#::kable(formatted3[, c(1,2,3,4)])
+formatted3[, c(1,2,3,4)]
+
+```
+
+All exported files for the `r formatted1_pars$algo` and `r formatted2_pars$algo`, as well as for the comparison can be found `r params$approxmapR_results`.
