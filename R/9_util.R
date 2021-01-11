@@ -196,3 +196,23 @@ plot_weighted_sequence <- function(w_sequence) {
     df_sequence %>% ggplot(aes(element_no, element_weight)) + geom_point() + geom_label(aes(y = element_weight +
                                                                                                 0.02 * element_weight, label = element)) + geom_vline(data = df_itemset, aes(xintercept = element_no))
 }
+
+
+
+
+
+#' @export
+convert_to_events <- function(df) {
+
+  df %>%
+    mutate(event_set = str_split(consensus_pattern, "[\\(\\)]")) %>%
+    unnest(cols = c(event_set)) %>%
+    filter(event_set != "") %>% filter(event_set != " ") %>%
+    group_by(consensus_pattern) %>%
+    mutate(period = row_number()) %>%
+    mutate(event = str_split(event_set, "[, ]")) %>%
+    unnest(cols = c(event)) %>%
+    filter(event != "") %>% filter(event != " ") %>% ungroup() %>%
+    select(id, period, event)
+
+}
