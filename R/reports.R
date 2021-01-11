@@ -40,7 +40,8 @@ file_check <- function(dir = ".", file_name) {
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
-                             output_directory = "~") {
+                             output_directory = "~",
+                             end_filename_with = "") {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
 
   folder = "approxmap_results"
@@ -103,7 +104,8 @@ generate_reports <- function(w_sequence_dataframe,
     report_rmd,
     params = list(input = formatted,
                   title = "All Sequences"),
-    output_file = file_check(output_directory_private, "all_sequences.html"),
+    #output_file = file_check(output_directory_private, "all_sequences.html"),
+    output_file = file_check(output_directory_private, paste0("all_sequences", end_filename_with, ".html")),
     output_dir = output_directory_private
   )
   patterns <-
@@ -114,7 +116,8 @@ generate_reports <- function(w_sequence_dataframe,
     report_rmd,
     params = list(input = patterns,
                   title = "Patterns"),
-    output_file = file_check(output_directory_public, "patterns.html"),
+    #output_file = file_check(output_directory_public, "patterns.html"),
+    output_file = file_check(output_directory_public, paste0("patterns", end_filename_with, ".html")),
     output_dir = output_directory_public
   )
 
@@ -128,7 +131,8 @@ generate_reports <- function(w_sequence_dataframe,
     report_rmd,
     params = list(input = w_sequences,
                   title = "Weighted Sequences"),
-    output_file = file_check(output_directory_private, "weighted_sequences.html"),
+    #output_file = file_check(output_directory_private, "weighted_sequences.html"),
+    output_file = file_check(output_directory_private, paste0("weighted_sequences", end_filename_with, ".html")),
     output_dir = output_directory_private
   )
 
@@ -141,7 +145,8 @@ generate_reports <- function(w_sequence_dataframe,
     write_file(paste0(
       output_directory_private,
       "/",
-      file_check(output_directory_private, "alignments.csv")
+      #file_check(output_directory_private, "alignments.csv")
+      file_check(output_directory_private, paste0("alignments", end_filename_with, ".csv"))
     ))
 
   w_sequence_dataframe %>%
@@ -149,7 +154,8 @@ generate_reports <- function(w_sequence_dataframe,
     write_file(paste0(
       output_directory_private,
       "/",
-      file_check(output_directory_private, "alignments_with_date.csv")
+      #file_check(output_directory_private, "alignments_with_date.csv")
+      file_check(output_directory_private, paste0("alignments_with_date", end_filename_with, ".csv"))
     ))
 
 
@@ -227,7 +233,9 @@ generate_summary_stats <- function(input_data,
     if (!dir.exists(results_directory))
       dir.create(results_directory)
     write_csv(count_items,
-              paste0(results_directory, "/count_items.csv"))
+              #paste0(results_directory, "/count_items.csv")
+              paste0(results_directory, "/count_items", end_filename_with, ".csv")
+            )
   }
 }
 
