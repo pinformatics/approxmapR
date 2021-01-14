@@ -81,17 +81,17 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
     # .GlobalEnv$env_report$k <- k
 
-    message("Clustering...")
+    message("Clustering... \n")
 
     if (exists("env_dm", envir = globalenv()) && identical(.GlobalEnv$env_dm$df_aggregated, df_aggregated)) {
         if (use_cache) {
-            message("Using cached distance matrix...")
+            message("Using cached distance matrix... \n")
             df_sequence <- .GlobalEnv$env_dm$df_sequence
             distance_matrix <- .GlobalEnv$env_dm$distance_matrix
         } else {
             rm(env_dm)
             df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
-            message("Calculating distance matrix...")
+            message("Calculating distance matrix... \n")
             distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
         }
     } else {
@@ -99,17 +99,17 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
             .GlobalEnv$env_dm <- new.env()
 
             df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
-            message("Calculating distance matrix...")
+            message("Calculating distance matrix... \n")
             distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
 
             .GlobalEnv$env_dm$df_aggregated <- df_aggregated
             .GlobalEnv$env_dm$df_sequence <- df_sequence
             .GlobalEnv$env_dm$distance_matrix <- distance_matrix
 
-            message("Caching distance matrix...")
+            message("Caching distance matrix... \n")
         } else {
             df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
-            message("Calculating distance matrix...")
+            message("Calculating distance matrix... \n")
             distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
         }
     }
@@ -117,7 +117,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
     # step 1 - initialize every *unique* sequence as a cluster
-    message("Initializing clusters...")
+    message("Initializing clusters... \n")
     df_cluster <- df_sequence %>% select(-sequence_formatted) %>% mutate(density_info = calculate_density_info(distance_matrix,
         k), sequence_density = map_dbl(density_info, "density"), cluster_id = row_number(), cluster_density = sequence_density)
 
@@ -129,7 +129,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
     # step 2 - clustering based on criteria
-    message("Clustering based on density...")
+    message("Clustering based on density... \n")
     df_cluster <- df_cluster %>% mutate(cluster_merge = cluster_id, cluster_merge = map2_int(density_info,
         cluster_id, function(sequence_density_info, current_cluster) {
             # browser()
@@ -150,7 +150,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
     df_cluster <- merge_clusters(df_cluster)
 
     # browser() step 3
-    message("Resolving ties...")
+    message("Resolving ties... \n")
     df_cluster <- df_cluster %>% mutate(cluster_merge = cluster_id, cluster_merge = pmap_int(list(density_info,
         cluster_id, cluster_density, cluster_id), function(sequence_density_info, current_cluster, current_cluster_density,
         id) {
@@ -182,7 +182,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
     class(df_cluster) <- c("Clustered_Dataframe", class(df_cluster))
 
-    message("----------Done Clustering----------")
+    message("----------Done Clustering---------- \n")
 
     df_cluster
 }
@@ -191,7 +191,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
 #' @export
-cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
+cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FALSE, k.max = 10) {
 
   #df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
 
@@ -205,11 +205,11 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
   # .GlobalEnv$env_report$k <- k
 
-  message("Clustering...")
+  message("Clustering... \n")
 
   if (exists("env_dm", envir = globalenv()) && identical(.GlobalEnv$env_dm$df_aggregated, df_aggregated)) {
       if (use_cache) {
-          message("Using cached distance matrix...")
+          message("Using cached distance matrix... \n")
           df_cluster <- .GlobalEnv$env_dm$df_sequence
           distance_matrix <- .GlobalEnv$env_dm$distance_matrix
           distance_matrix[is.na(distance_matrix)] = 0
@@ -217,7 +217,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
       } else {
           rm(env_dm)
           df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
-          message("Calculating distance matrix...")
+          message("Calculating distance matrix... \n")
           distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
           distance_matrix[is.na(distance_matrix)] = 0
       }
@@ -226,19 +226,19 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
           .GlobalEnv$env_dm <- new.env()
 
           df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
-          message("Calculating distance matrix...")
+          message("Calculating distance matrix... \n")
           distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
 
-          .GlobalEnv$env_dm$df_aggregated <- df_cluster
-          .GlobalEnv$env_dm$df_sequence <- df_sequence
+          .GlobalEnv$env_dm$df_aggregated <- df_aggregated
+          .GlobalEnv$env_dm$df_sequence <- df_cluster
           .GlobalEnv$env_dm$distance_matrix <- distance_matrix
 
           distance_matrix[is.na(distance_matrix)] = 0
 
-          message("Caching distance matrix...")
+          message("Caching distance matrix... \n")
       } else {
           df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
-          message("Calculating distance matrix...")
+          message("Calculating distance matrix... \n")
           distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
           distance_matrix[is.na(distance_matrix)] = 0
       }
@@ -248,8 +248,33 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
   #######
 
-  message("Clustering Based on PAM Algorithm")
-  res <- pam(distance_matrix, k = k, diss = TRUE)
+  #######
+  # Estimating the optimal number of clusters
+  if (estimate_k) {
+
+    message("Estimating Optimal K using the silhouette approach \n")
+    res <- fviz_nbclust(distance_matrix, cluster::pam, method = "silhouette", diss = distance_matrix, k.max = k.max)
+    best_k <- which.max(res$data$y)
+
+    message("Optimal K = ", best_k, "\n")
+    print(res)
+
+    message("Clustering Based on PAM Algorithm \n")
+    res <- pam(distance_matrix, k = best_k, diss = TRUE)
+
+  } else {
+
+    message("Clustering Based on PAM Algorithm \n")
+    res <- pam(distance_matrix, k = k, diss = TRUE)
+
+  }
+
+
+
+  #######
+
+  #message("Clustering Based on PAM Algorithm")
+  #res <- pam(distance_matrix, k = k, diss = TRUE)
 
 
   df_cluster$cluster_id <- res$cluster
