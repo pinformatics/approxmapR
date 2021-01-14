@@ -193,14 +193,60 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 #' @export
 cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
-  df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+  #df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
 
   #message("Calculating distance matrix...")
-  distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
-  distance_matrix[is.na(distance_matrix)] = 0
+  #distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+  #distance_matrix[is.na(distance_matrix)] = 0
+
+  #####
+  # message('------------Clustering------------')
+  stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))
+
+  # .GlobalEnv$env_report$k <- k
+
+  message("Clustering...")
+
+  if (exists("env_dm", envir = globalenv()) && identical(.GlobalEnv$env_dm$df_aggregated, df_aggregated)) {
+      if (use_cache) {
+          message("Using cached distance matrix...")
+          df_cluster <- .GlobalEnv$env_dm$df_sequence
+          distance_matrix <- .GlobalEnv$env_dm$distance_matrix
+          distance_matrix[is.na(distance_matrix)] = 0
+
+      } else {
+          rm(env_dm)
+          df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+          message("Calculating distance matrix...")
+          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+          distance_matrix[is.na(distance_matrix)] = 0
+      }
+  } else {
+      if (use_cache) {
+          .GlobalEnv$env_dm <- new.env()
+
+          df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+          message("Calculating distance matrix...")
+          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+
+          .GlobalEnv$env_dm$df_aggregated <- df_cluster
+          .GlobalEnv$env_dm$df_sequence <- df_sequence
+          .GlobalEnv$env_dm$distance_matrix <- distance_matrix
+
+          distance_matrix[is.na(distance_matrix)] = 0
+
+          message("Caching distance matrix...")
+      } else {
+          df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+          message("Calculating distance matrix...")
+          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+          distance_matrix[is.na(distance_matrix)] = 0
+      }
+  }
 
 
 
+  #######
 
   message("Clustering Based on PAM Algorithm")
   res <- pam(distance_matrix, k = k, diss = TRUE)
