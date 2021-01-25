@@ -301,3 +301,109 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FA
   df_cluster
 
 }
+
+
+
+
+
+
+
+
+#' @export
+find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, use_cache = TRUE) {
+
+
+  # Using cached information if present, otherwise calculating it and storing
+  #   it as an environment variable
+  stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))
+
+  message("Clustering... \n")
+
+  if (exists("env_dm", envir = globalenv()) && identical(.GlobalEnv$env_dm$df_aggregated, df_aggregated)) {
+    if (use_cache) {
+      message("Using cached distance matrix... \n")
+      df_cluster <- .GlobalEnv$env_dm$df_sequence
+      distance_matrix <- .GlobalEnv$env_dm$distance_matrix
+      distance_matrix[is.na(distance_matrix)] = 0
+
+    } else {
+      rm(env_dm)
+      df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+      message("Calculating distance matrix... \n")
+      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+      distance_matrix[is.na(distance_matrix)] = 0
+    }
+  } else {
+    if (use_cache) {
+      .GlobalEnv$env_dm <- new.env()
+
+      df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+      message("Calculating distance matrix... \n")
+      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+
+      .GlobalEnv$env_dm$df_aggregated <- df_aggregated
+      .GlobalEnv$env_dm$df_sequence <- df_cluster
+      .GlobalEnv$env_dm$distance_matrix <- distance_matrix
+
+      distance_matrix[is.na(distance_matrix)] = 0
+
+      message("Caching distance matrix... \n")
+    } else {
+      df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
+      message("Calculating distance matrix... \n")
+      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+      distance_matrix[is.na(distance_matrix)] = 0
+    }
+  }
+
+
+
+
+
+  if (clustering == "k-nn") {
+
+    algo = "K-Nearest Neighbors"
+
+    sil <- sapply(2:max_k, function(k) {
+
+              clustered <- df_aggregated %>% cluster_knn(k = k)
+              cluster_id <- clustered %>% unnest(df_sequences) %>% select(id, cluster) %>% arrange(id)
+
+              mean(silhouette(cluster_id$cluster, dmatrix = distance_matrix)[,3])
+
+    })
+
+  } else if (clustering == "k-medoids") {
+
+    algo = "K-Medoids"
+
+    sil <- sapply(2:max_k, function(k) {
+
+      clustered <- df_aggregated %>% cluster_kmedoids(k = k)
+      cluster_id <- clustered %>% unnest(df_sequences) %>% select(id, cluster) %>% arrange(id)
+
+      mean(silhouette(cluster_id$cluster, dmatrix = distance_matrix)[,3])
+
+    })
+
+  } else {
+
+    stop("Only clustering values of 'k-nn' and 'k-medoids' are supported right now.")
+
+  }
+
+
+  plot(c(sil), type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
+       xlab = "k Value",
+       ylab = "Average silhouette width") +
+
+    mtext(paste0("Optimal K Plot for ", algo), line = 2, adj = 0, cex = 1.5) +
+
+    mtext(paste0("k =", which.max(sil), "; Max average silhouette width = ", round(max(sil), digits = 3)),
+          line = .75, adj = 0) +
+
+    abline(v = c(which.max(sil), max(sil)),
+           lty = "dashed", lwd = .5, col = "#20B2AA")
+
+
+}
