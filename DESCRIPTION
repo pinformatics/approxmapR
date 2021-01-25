@@ -1,7 +1,7 @@
 Package: approxmapR
 Type: Package
 Title: ApproxMAP (APPROXimate Multiple Alignment Pattern)
-Version: 0.1.3
+Version: 0.1.4
 Author: Gurudev Ilngovan, Corey Bryant, and Hye Chung Kum.
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: ApproxMAP (APPROXimate Multiple Alignment Pattern).
@@ -29,6 +29,7 @@ Imports: Rcpp,
     kableExtra,
     igraph,
     htmlwidgets,
-    cluster
+    cluster,
+    fpc
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
