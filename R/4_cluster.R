@@ -368,7 +368,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, valid
 
       clustered <- df_aggregated %>% cluster_knn(k = k)
       cluster_id <- clustered %>% unnest(df_sequences) %>% select(id, cluster) %>% arrange(id)
-      clust_stats <- cluster.stats(d = dm, clustering = cluster_id$cluster)
+      clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster)
 
 
       # Measure selection
@@ -393,7 +393,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, valid
 
       clustered <- df_aggregated %>% cluster_kmedoids(k = k)
       cluster_id <- clustered %>% unnest(df_sequences) %>% select(id, cluster) %>% arrange(id)
-      clust_stats <- cluster.stats(d = dm, clustering = cluster_id$cluster)
+      clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster)
       #mean(silhouette(cluster_id$cluster, dmatrix = distance_matrix)[,3])
 
 
