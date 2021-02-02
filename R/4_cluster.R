@@ -310,7 +310,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FA
 
 
 #' @export
-find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, validation_measure = 'silhouette', use_cache = TRUE) {
+find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10, validation_measure = 'silhouette', use_cache = TRUE) {
 
 
   # Using cached information if present, otherwise calculating it and storing
@@ -369,14 +369,16 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, valid
     average_between <- numeric(n)
     average_within <- numeric(n)
     within_cluster_ss <- numeric(n)
-    average_silhouette_width <- numeric(n)
     dunn <- numeric(n)
     wb_ratio <- numeric(n)
     sum_diss <- numeric(n)
 
+    average_silhouette_width_lower_ci <- numeric(n)
+    average_silhouette_width <- numeric(n)
+    average_silhouette_width_upper_ci <- numeric(n)
 
 
-    for (i in 2:n) {
+    for (i in min_k:n) {
 
 
       if (clustering == "k-nn") {
@@ -402,25 +404,40 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, valid
       average_between[i] <- clust_stats$average.between
       average_within[i] <- clust_stats$average.within
       within_cluster_ss[i] <- clust_stats$within.cluster.ss
-      average_silhouette_width[i] <- clust_stats$avg.silwidth
       dunn[i] <- clust_stats$dunn
       wb_ratio[i] <- clust_stats$wb.ratio
 
 
-      #matrix_cluster <- dummy(cluster_id$cluster)
-      #sum_diss[i] <- sum(t(matrix(1, nrow = dim(matrix_cluster)[1])) %*% distance_matrix %*% matrix_cluster)
+
       matrix_cluster <- model.matrix(~factor(cluster_id$cluster) + 0)
       n_matrix <- (1/t(matrix_cluster) %*% matrix_cluster)
       n_matrix[is.infinite(n_matrix)] = 0
 
       sum_diss[i] <- sum((t(matrix_cluster) %*% distance_matrix %*% matrix_cluster * n_matrix))
 
+
+
+      # Calculating information for silhouette
+      sil <- silhouette(cluster_id$cluster, dmatrix = distance_matrix)
+
+      nobs <- dim(sil)[1]
+      x_bar <- mean(sil[,3])
+      error <- qt(0.975, df = nobs - 1) * sd(sil[, 3])/sqrt(nobs)
+
+      average_silhouette_width_lower_ci[i] <- x_bar - error
+      average_silhouette_width[i] <- x_bar
+      average_silhouette_width_upper_ci[i] <- x_bar + error
+
     }
 
     slice(data.frame(k, n_clusters, cluster_size,
-                     average_silhouette_width, dunn,
-                     average_between, average_within,
-                     wb_ratio, within_cluster_ss, sum_diss), 2:n())
+                     average_silhouette_width_lower_ci,
+                     average_silhouette_width,
+                     average_silhouette_width_upper_ci,
+                     dunn,
+                     average_within, average_between, wb_ratio,
+                     within_cluster_ss,
+                     sum_diss), 2:n())
 
 
   }
@@ -477,34 +494,70 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, valid
 
   if (validation_measure == 'silhouette') {
 
-    plot(k_info$k, measure_values,
-         type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
-         xlab = "k Value",
-         ylab = measure) +
+    #plot(k_info$k, measure_values,
+     #    type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
+      #   xlab = "k Value",
+       #  ylab = measure) +
 
-      mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5) +
+      #mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5) +
 
-      mtext(paste0("k =", which.max(k_info$average_silhouette_width) + 1, "; Max average silhouette width = ", round(max(k_info$average_silhouette_width), digits = 3)),
-            line = .75, adj = 0) +
+      #mtext(paste0("k =", which.max(k_info$average_silhouette_width) + 1, "; Max average silhouette width = ", round(max(k_info$average_silhouette_width), digits = 3)),
+       #     line = .75, adj = 0) +
 
-      abline(v = c(which.max(k_info$average_silhouette_width) + 1, max(k_info$average_silhouette_width)),
-             lty = "dashed",
-             lwd = .5,
-             col = "#20B2AA")
+      #abline(v = c(which.max(k_info$average_silhouette_width) + 1, max(k_info$average_silhouette_width)),
+       #      lty = "dashed",
+        #     lwd = .5,
+         #    col = "#20B2AA")
+
+
+   k_plot <- ggplot(k_info, aes(k, average_silhouette_width)) +
+
+      geom_line(color = "#20B2AA") +
+
+      geom_errorbar(aes(ymax = average_silhouette_width_upper_ci,
+                        ymin = average_silhouette_width_lower_ci),
+                    width = .25,
+                    color = "#20B2AA") +
+
+      geom_vline(xintercept = which.max(k_info$average_silhouette_width) + 1,
+                 color = "#20B2AA", linetype = 'dashed') +
+
+      labs(title = "Optimal K Plot",
+           subtitle = paste0("k =", which.max(k_info$average_silhouette_width) + 1, "; Max average silhouette width = ", round(max(k_info$average_silhouette_width), digits = 3)),
+           x = "K Value",
+           y = measure)  +
+
+     #xlim(min(k_info$k), max(k_info$k))
+     coord_cartesian(xlim = c(min(k_info$k), max(k_info$k)))
+
 
 
   } else {
 
-    plot(k_info$k, measure_values,
-       type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
-       xlab = "k Value",
-       ylab = measure) +
+    #plot(k_info$k, measure_values,
+     #  type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
+      # xlab = "k Value",
+       #ylab = measure) +
 
-    mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5)
+    #mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5)
+
+
+    k_plot <- ggplot(k_info, aes(k, measure_values)) +
+
+      geom_line(color = "#20B2AA") +
+
+      labs(title = "Optimal K Plot",
+           x = "K Value",
+           y = measure) +
+
+      #xlim(min(k_info$k), max(k_info$k))
+      coord_cartesian(xlim = c(min(k_info$k), max(k_info$k)))
+
+
 
   }
 
-
+  print(k_plot)
   return(k_info)
 
 }
