@@ -310,7 +310,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FA
 
 
 #' @export
-find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, validation_measure = 'silhoutte', use_cache = TRUE) {
+find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, validation_measure = 'silhouette', use_cache = TRUE) {
 
 
   # Using cached information if present, otherwise calculating it and storing
@@ -360,96 +360,151 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', max_k = 10, valid
 
 
 
-  if (clustering == "k-nn") {
+  calc <- function(n) {
 
-    algo = "K-Nearest Neighbors"
+    # Preallocating vectors
+    k <- numeric(n)
+    n_clusters <- numeric(n)
+    cluster_size <- character(n)
+    average_between <- numeric(n)
+    average_within <- numeric(n)
+    within_cluster_ss <- numeric(n)
+    average_silhouette_width <- numeric(n)
+    dunn <- numeric(n)
+    wb_ratio <- numeric(n)
+    sum_diss <- numeric(n)
 
-    sil <- sapply(2:max_k, function(k) {
 
-      clustered <- df_aggregated %>% cluster_knn(k = k)
+
+    for (i in 2:n) {
+
+
+      if (clustering == "k-nn") {
+
+        algo = "K-Nearest Neighbors"
+        clustered <- df_aggregated %>% cluster_knn(k = i)
+
+      } else if (clustering == "k-medoids") {
+
+        algo = "K-Medoids"
+        clustered <- df_aggregated %>% cluster_kmedoids(k = i)
+
+      }
+
       cluster_id <- clustered %>% unnest(df_sequences) %>% select(id, cluster) %>% arrange(id)
       clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster)
 
 
-      # Measure selection
-      if (validation_measure == 'silhoutte') { clust_stats$avg.silwidth
 
-      } else if (validation_measure == 'elbow') { clust_stats$average.within
-
-      } else if (validation_measure == 'dunn') { clust_stats$dunn
-
-      }
-
-
-    })
-
+      k[i] <- i
+      n_clusters[i] <- clust_stats$cluster.number
+      cluster_size[i] <- toString(clust_stats$cluster.size)
+      average_between[i] <- clust_stats$average.between
+      average_within[i] <- clust_stats$average.within
+      within_cluster_ss[i] <- clust_stats$within.cluster.ss
+      average_silhouette_width[i] <- clust_stats$avg.silwidth
+      dunn[i] <- clust_stats$dunn
+      wb_ratio[i] <- clust_stats$wb.ratio
 
 
-  } else if (clustering == "k-medoids") {
+      #matrix_cluster <- dummy(cluster_id$cluster)
+      #sum_diss[i] <- sum(t(matrix(1, nrow = dim(matrix_cluster)[1])) %*% distance_matrix %*% matrix_cluster)
+      matrix_cluster <- model.matrix(~factor(cluster_id$cluster) + 0)
+      n_matrix <- (1/t(matrix_cluster) %*% matrix_cluster)
+      n_matrix[is.infinite(n_matrix)] = 0
 
-    algo = "K-Medoids"
-
-    sil <- sapply(2:max_k, function(k) {
-
-      clustered <- df_aggregated %>% cluster_kmedoids(k = k)
-      cluster_id <- clustered %>% unnest(df_sequences) %>% select(id, cluster) %>% arrange(id)
-      clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster)
-      #mean(silhouette(cluster_id$cluster, dmatrix = distance_matrix)[,3])
-
-
-      # Measure selection
-      if (validation_measure == 'silhoutte') { clust_stats$avg.silwidth
-
-      } else if (validation_measure == 'elbow') { clust_stats$average.within
-
-      } else if (validation_measure == 'dunn') { clust_stats$dunn
-
-      }
-
-
-    })
-
-  } else {
-
-    stop("Only clustering values of 'k-nn' and 'k-medoids' are supported right now.")
-
-  }
-  sil <- append(sil[1], sil)
-
-
-
-
-  ## Visualizations
-  if (validation_measure == 'silhoutte') {
-
-          plot(c(sil), type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
-               xlab = "k Value",
-               ylab = "Average silhouette width") +
-
-          mtext(paste0("Optimal K Plot for ", algo), line = 2, adj = 0, cex = 1.5) +
-
-          mtext(paste0("k =", which.max(sil), "; Max average silhouette width = ", round(max(sil), digits = 3)),
-                line = .75, adj = 0) +
-
-          abline(v = c(which.max(sil), max(sil)), lty = "dashed", lwd = .5, col = "#20B2AA")
-
-  } else {
-
-    # Y label selection
-    if (validation_measure == 'elbow') {measure = 'Average Distance within Cluster'
-
-    } else if (validation_measure == 'dunn') {measure = 'Dunn Index'
+      sum_diss[i] <- sum((t(matrix_cluster) %*% distance_matrix %*% matrix_cluster * n_matrix))
 
     }
 
-    # Plotting
-    plot(c(sil), type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
-         xlab = "k Value",
-         ylab = measure) +
-
-      mtext(paste0("Optimal K Plot for ", algo), line = 2, adj = 0, cex = 1.5)
+    slice(data.frame(k, n_clusters, cluster_size,
+                     average_silhouette_width, dunn,
+                     average_between, average_within,
+                     wb_ratio, within_cluster_ss, sum_diss), 2:n())
 
 
   }
+
+  k_info <- calc(max_k)
+
+
+
+
+
+  # Plotting Information
+  if (validation_measure == 'silhouette') {
+
+      measure = 'Average Silhouette Width'
+      measure_values = k_info$average_silhouette_width
+
+  } else if (validation_measure == 'dunn') {
+
+      measure = 'Dunn Index'
+      measure_values = k_info$dunn
+
+  } else if (validation_measure == 'wb_ratio') {
+
+      measure = 'Average Distance Within Cluster / Average Distance Between Clusters'
+      measure_values = k_info$wb_ratio
+
+  } else if (validation_measure == 'average_between') {
+
+      measure = 'Average Distance Between Clusters'
+      measure_values = k_info$average_between
+
+  } else if (validation_measure == 'average_within') {
+
+      measure = 'Average Distance Within Cluster'
+      measure_values = k_info$average_within
+
+  } else if (validation_measure == 'within_cluster_ss') {
+
+      measure = 'Sum of Within Cluster / Cluster Size'
+      measure_values = k_info$within_cluster_ss
+
+  } else if (validation_measure == 'sum_diss') {
+
+      measure = 'Sum of Dissimilarities'
+      measure_values = k_info$sum_diss
+
+  } else {
+
+    stop("Only validation measures of silhouette, dunn, wb_ratio, average_between, average_within, and within_cluster_ss are supported.")
+
+  }
+
+
+
+  if (validation_measure == 'silhouette') {
+
+    plot(k_info$k, measure_values,
+         type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
+         xlab = "k Value",
+         ylab = measure) +
+
+      mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5) +
+
+      mtext(paste0("k =", which.max(k_info$average_silhouette_width) + 1, "; Max average silhouette width = ", round(max(k_info$average_silhouette_width), digits = 3)),
+            line = .75, adj = 0) +
+
+      abline(v = c(which.max(k_info$average_silhouette_width) + 1, max(k_info$average_silhouette_width)),
+             lty = "dashed",
+             lwd = .5,
+             col = "#20B2AA")
+
+
+  } else {
+
+    plot(k_info$k, measure_values,
+       type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
+       xlab = "k Value",
+       ylab = measure) +
+
+    mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5)
+
+  }
+
+
+  return(k_info)
 
 }
