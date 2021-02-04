@@ -202,17 +202,17 @@ plot_weighted_sequence <- function(w_sequence) {
 
 
 #' @export
-convert_to_events <- function(df) {
-
-  df %>%
-    mutate(event_set = str_split(consensus_pattern, "[\\(\\)]")) %>%
+convert_to_events <- function(data, id_column, sequence_column) {
+  
+  data %>%
+    mutate(event_set = str_split(data[[sequence_column]], "[\\(\\)]")) %>%
     unnest(cols = c(event_set)) %>%
     filter(event_set != "") %>% filter(event_set != " ") %>%
-    group_by(consensus_pattern) %>%
+    group_by_(sequence_column) %>%
     mutate(period = row_number()) %>%
     mutate(event = str_split(event_set, "[, ]")) %>%
     unnest(cols = c(event)) %>%
     filter(event != "") %>% filter(event != " ") %>% ungroup() %>%
-    select(id, period, event)
+    select(id_column, period, event)
 
 }
