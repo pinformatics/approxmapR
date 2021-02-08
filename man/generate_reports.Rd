@@ -3,7 +3,8 @@
 \title{Report generation}
 \usage{
   generate_reports(w_sequence_dataframe, html_format = TRUE,
-                    output_directory = "~", end_filename_with = "")
+                  output_directory = "~", end_filename_with = "",
+                  algorithm_comparison = FALSE)
 }
 \arguments{
 \item{w_sequence_dataframe}{A dataframe with class "W_Sequence_Dataframe". This will be
@@ -16,6 +17,21 @@ folder with the name of "approxmap_results".}
 
 \item{end_filename_with}{The option of appending to the end of the default file names. This
 is useful if running multiple algorithms that will be exported to the same output_directory.}
+
+\item{algorithm_comparison}{The option to indicate if the report being generated is
+one that is comparing multiple algorithms, for example the outcome of using the K-NN
+and K-Medoids algorithm. This function separates the *id* column using
+id \%>\% str_split("_", simplify = TRUE).
+
+If using this option the criteria is specific for the id column. The *id* column
+must represent the algorithm used, cluster, and number of sequences within the cluster.
+For example, an id should look like "kmed_cluster1_n288" where "kmed" represents the
+clustering algorithm used, "_cluster1" indicates the pattern came from the first
+cluster, and "_n228" indicates that 228 sequences were apart of cluster 1. An example
+of how this can be created is:
+
+    formatted_kmed \%>\% mutate(id = paste0("kmed", "_cluster", cluster, "_n", n))
+}
 }
 \value{
 Nothing is returned, only exports results.
@@ -51,7 +67,7 @@ folder based on data sensitivity.
 \examples{
   data("mvad")
 
-  cclustered_kmed <- mvad \%>\%
+  clustered_kmed <- mvad \%>\%
                           aggregate_sequences(format = "\%Y-\%m-\%d",
                                               unit = "month",
                                               n_units = 1,

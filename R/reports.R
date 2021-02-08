@@ -41,7 +41,8 @@ generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
                              output_directory = "~",
-                             end_filename_with = "") {
+                             end_filename_with = "",
+                             algorithm_comparison = FALSE) {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
 
   folder = "approxmap_results"
@@ -141,7 +142,7 @@ generate_reports <- function(w_sequence_dataframe,
   message("saving alignments...")
 
   w_sequence_dataframe %>%
-    save_alignment(save_date=FALSE) %>%
+    save_alignment(save_date=FALSE, algorithm_comparison = algorithm_comparison) %>%
     write_file(paste0(
       output_directory_private,
       "/",
@@ -150,7 +151,7 @@ generate_reports <- function(w_sequence_dataframe,
     ))
 
   w_sequence_dataframe %>%
-    save_alignment(save_date=TRUE) %>%
+    save_alignment(save_date=TRUE, algorithm_comparison = algorithm_comparison) %>%
     write_file(paste0(
       output_directory_private,
       "/",
@@ -339,16 +340,33 @@ save_alignment.Sequence <- function(sequence) {
     paste0(collapse = ", ")
 }
 
-save_alignment.Sequence_List <- function(alignment, save_date=TRUE) {
+save_alignment.Sequence_List <- function(alignment, save_date=TRUE, algorithm_comparison = algorithm_comparison) {
   map2_chr(alignment, names(alignment), function(seq, id) {
-    seqs <- str_c(id, ", ", save_alignment(seq), "\n")
-    if(save_date){
+
+    if (algorithm_comparison) {
+
+      temp <- id %>% str_split("_", simplify = TRUE)
+
+      seqs <- str_c(temp[1], ", ", temp[2], ", ", temp[3], ", ",save_alignment(seq), "\n")
+
+    } else {
+
+      seqs <- str_c(id, ", ", save_alignment(seq), "\n")
+
+    }
+
+    if(save_date) {
+
       dates <- str_c(id, ", ", align_date_to_seq(id, seq), "\n")
       paste0(seqs, dates)
+
     } else {
+
       seqs
     }
+
   }) %>%
+
     str_c(collapse = "")
 }
 
