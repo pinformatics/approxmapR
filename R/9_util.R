@@ -208,7 +208,7 @@ convert_to_events <- function(data, id_column, sequence_column) {
     mutate(event_set = str_split(data[[sequence_column]], "[\\(\\)]")) %>%
     unnest(cols = c(event_set)) %>%
     filter(event_set != "") %>% filter(event_set != " ") %>%
-    group_by_(sequence_column) %>%
+    group_by({{ sequence_column }}) %>%
     mutate(period = row_number()) %>%
     mutate(event = str_split(event_set, "[, ]")) %>%
     unnest(cols = c(event)) %>%
