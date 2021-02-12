@@ -292,7 +292,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FA
                            df_sequence
                   })) %>%
                   arrange(desc(n)) %>%
-                  ungroup() #%>%                   mutate(cluster = row_number())
+                  ungroup()
 
   class(df_cluster) <- c("Clustered_Dataframe", class(df_cluster))
 
@@ -371,7 +371,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
     within_cluster_ss <- numeric(n)
     dunn <- numeric(n)
     wb_ratio <- numeric(n)
-    sum_diss <- numeric(n)
+    #sum_diss <- numeric(n)
 
     average_silhouette_width_lower_ci <- numeric(n)
     average_silhouette_width <- numeric(n)
@@ -409,11 +409,11 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
 
 
 
-      matrix_cluster <- model.matrix(~factor(cluster_id$cluster) + 0)
-      n_matrix <- (1/t(matrix_cluster) %*% matrix_cluster)
-      n_matrix[is.infinite(n_matrix)] = 0
+      #matrix_cluster <- model.matrix(~factor(cluster_id$cluster) + 0)
+      #n_matrix <- (1/t(matrix_cluster) %*% matrix_cluster)
+      #n_matrix[is.infinite(n_matrix)] = 0
 
-      sum_diss[i] <- sum((t(matrix_cluster) %*% distance_matrix %*% matrix_cluster * n_matrix))
+      #sum_diss[i] <- sum((t(matrix_cluster) %*% distance_matrix %*% matrix_cluster * n_matrix))
 
 
 
@@ -436,8 +436,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
                      average_silhouette_width_upper_ci,
                      dunn,
                      average_within, average_between, wb_ratio,
-                     within_cluster_ss,
-                     sum_diss), 2:n())
+                     within_cluster_ss), 2:n())
 
 
   }
@@ -479,36 +478,22 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
       measure = 'Sum of Within Cluster / Cluster Size'
       measure_values = k_info$within_cluster_ss
 
-  } else if (validation_measure == 'sum_diss') {
-
-      measure = 'Sum of Dissimilarities'
-      measure_values = k_info$sum_diss
-
   } else {
 
     stop("Only validation measures of silhouette, dunn, wb_ratio, average_between, average_within, and within_cluster_ss are supported.")
 
   }
 
+  #else if (validation_measure == 'sum_diss') {
+
+  #    measure = 'Sum of Dissimilarities'
+  #    measure_values = k_info$sum_diss
+
+  #}
+
 
 
   if (validation_measure == 'silhouette') {
-
-    #plot(k_info$k, measure_values,
-     #    type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
-      #   xlab = "k Value",
-       #  ylab = measure) +
-
-      #mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5) +
-
-      #mtext(paste0("k =", which.max(k_info$average_silhouette_width) + 1, "; Max average silhouette width = ", round(max(k_info$average_silhouette_width), digits = 3)),
-       #     line = .75, adj = 0) +
-
-      #abline(v = c(which.max(k_info$average_silhouette_width) + 1, max(k_info$average_silhouette_width)),
-       #      lty = "dashed",
-        #     lwd = .5,
-         #    col = "#20B2AA")
-
 
    k_plot <- ggplot(k_info, aes(k, average_silhouette_width)) +
 
@@ -527,19 +512,12 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
            x = "K Value",
            y = measure)  +
 
-     #xlim(min(k_info$k), max(k_info$k))
+
      coord_cartesian(xlim = c(min(k_info$k), max(k_info$k)))
 
 
 
   } else {
-
-    #plot(k_info$k, measure_values,
-     #  type = "o", col = "#20B2AA", bty = "l", oma = c(2, 3, 4, 5),
-      # xlab = "k Value",
-       #ylab = measure) +
-
-    #mtext("Optimal K Plot", line = 2, adj = 0, cex = 1.5)
 
 
     k_plot <- ggplot(k_info, aes(k, measure_values)) +
@@ -550,7 +528,6 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
            x = "K Value",
            y = measure) +
 
-      #xlim(min(k_info$k), max(k_info$k))
       coord_cartesian(xlim = c(min(k_info$k), max(k_info$k)))
 
 
