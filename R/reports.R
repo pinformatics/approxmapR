@@ -40,7 +40,9 @@ file_check <- function(dir = ".", file_name) {
 generate_reports <- function(w_sequence_dataframe,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
-                             output_directory = "~") {
+                             output_directory = "~",
+                             end_filename_with = "",
+                             algorithm_comparison = FALSE) {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
 
   folder = "approxmap_results"
@@ -103,7 +105,8 @@ generate_reports <- function(w_sequence_dataframe,
     report_rmd,
     params = list(input = formatted,
                   title = "All Sequences"),
-    output_file = file_check(output_directory_private, "all_sequences.html"),
+    #output_file = file_check(output_directory_private, "all_sequences.html"),
+    output_file = file_check(output_directory_private, paste0("all_sequences", end_filename_with, ".html")),
     output_dir = output_directory_private
   )
   patterns <-
@@ -114,7 +117,8 @@ generate_reports <- function(w_sequence_dataframe,
     report_rmd,
     params = list(input = patterns,
                   title = "Patterns"),
-    output_file = file_check(output_directory_public, "patterns.html"),
+    #output_file = file_check(output_directory_public, "patterns.html"),
+    output_file = file_check(output_directory_public, paste0("patterns", end_filename_with, ".html")),
     output_dir = output_directory_public
   )
 
@@ -128,7 +132,8 @@ generate_reports <- function(w_sequence_dataframe,
     report_rmd,
     params = list(input = w_sequences,
                   title = "Weighted Sequences"),
-    output_file = file_check(output_directory_private, "weighted_sequences.html"),
+    #output_file = file_check(output_directory_private, "weighted_sequences.html"),
+    output_file = file_check(output_directory_private, paste0("weighted_sequences", end_filename_with, ".html")),
     output_dir = output_directory_private
   )
 
@@ -137,19 +142,21 @@ generate_reports <- function(w_sequence_dataframe,
   message("saving alignments...")
 
   w_sequence_dataframe %>%
-    save_alignment(save_date=FALSE) %>%
+    save_alignment(save_date=FALSE, algorithm_comparison = algorithm_comparison) %>%
     write_file(paste0(
       output_directory_private,
       "/",
-      file_check(output_directory_private, "alignments.csv")
+      #file_check(output_directory_private, "alignments.csv")
+      file_check(output_directory_private, paste0("alignments", end_filename_with, ".csv"))
     ))
 
   w_sequence_dataframe %>%
-    save_alignment(save_date=TRUE) %>%
+    save_alignment(save_date=TRUE, algorithm_comparison = algorithm_comparison) %>%
     write_file(paste0(
       output_directory_private,
       "/",
-      file_check(output_directory_private, "alignments_with_date.csv")
+      #file_check(output_directory_private, "alignments_with_date.csv")
+      file_check(output_directory_private, paste0("alignments_with_date", end_filename_with, ".csv"))
     ))
 
 
@@ -227,7 +234,9 @@ generate_summary_stats <- function(input_data,
     if (!dir.exists(results_directory))
       dir.create(results_directory)
     write_csv(count_items,
-              paste0(results_directory, "/count_items.csv"))
+              #paste0(results_directory, "/count_items.csv")
+              paste0(results_directory, "/count_items", end_filename_with, ".csv")
+            )
   }
 }
 
@@ -331,16 +340,33 @@ save_alignment.Sequence <- function(sequence) {
     paste0(collapse = ", ")
 }
 
-save_alignment.Sequence_List <- function(alignment, save_date=TRUE) {
+save_alignment.Sequence_List <- function(alignment, save_date=TRUE, algorithm_comparison = algorithm_comparison) {
   map2_chr(alignment, names(alignment), function(seq, id) {
-    seqs <- str_c(id, ", ", save_alignment(seq), "\n")
-    if(save_date){
+
+    if (algorithm_comparison) {
+
+      temp <- id %>% str_split("_", simplify = TRUE)
+
+      seqs <- str_c(temp[1], ", ", temp[2], ", ", temp[3], ", ",save_alignment(seq), "\n")
+
+    } else {
+
+      seqs <- str_c(id, ", ", save_alignment(seq), "\n")
+
+    }
+
+    if(save_date) {
+
       dates <- str_c(id, ", ", align_date_to_seq(id, seq), "\n")
       paste0(seqs, dates)
+
     } else {
+
       seqs
     }
+
   }) %>%
+
     str_c(collapse = "")
 }
 
@@ -349,4 +375,39 @@ save_alignment.W_Sequence_Dataframe <- function(df, ...) {
     str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments"), ...))
   }) %>%
     str_c(collapse = "\n")
+}
+
+
+
+#' @export
+algorithm_comparison <- function(formatted1, formatted1_pars = "No Pars1",
+                                 formatted2, formatted2_pars = "No Pars2",
+                                 formatted3, formatted3_pars = "No Pars2",
+                                 approxmapR_results = "~",
+                                 output_directory = "~",
+                                 file_name = "algorithm-comparison") {
+
+  report_rmd <- system.file("algo_compar.Rmd", package = "approxmapR")
+
+  rmarkdown::render(
+
+    report_rmd,
+
+    params = list(formatted1 = formatted1,
+                  formatted1_pars = formatted1_pars,
+
+                  formatted2 = formatted2,
+                  formatted2_pars = formatted2_pars,
+
+                  formatted3 = formatted3,
+                  formatted3_pars = formatted3_pars,
+
+                  approxmapR_results = approxmapR_results),
+
+    output_file = file_check(output_directory, paste0(file_name, ".html")),
+    output_dir = output_directory
+
+
+  )
+
 }
