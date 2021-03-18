@@ -1,6 +1,6 @@
 ---
 title: "Getting Started With ApproxmapR"
-author: "Gurudev Ilangovan"
+author: "Corey Bryant, Gurudev Ilangovan"
 date: "`r Sys.Date()`"
 output: rmarkdown::github_document
 vignette: >
@@ -12,25 +12,26 @@ vignette: >
 ```{r, include=FALSE}
 library(kableExtra)
 library(knitr)
-options(knitr.table.format = "html") 
+options(knitr.table.format = "html")
 ```
 
-
-Approxmap is an algorithm used for exploratory data analysis of sequential data. When we have longitudinal data and we want to find out the underlying patterns, we use approxmap. `approxmapR` aims to provide a consistent and tidy api for using the algorithm in R. This vignette aims to demonstrate the basic workflow of approxmapR. 
+Approxmap is an algorithm used for exploratory data analysis of sequential data. When one has longitudinal data and wants to find out the underlying patterns, one can use approxmap. `approxmapR` aims to provide a consistent and tidy API for using the algorithm in R. This vignette aims to demonstrate the basic workflow of approxmapR.
 
 Installation is simple.
 ```
 install.packages("devtools")
-devtools::install_github("ilangurudev/approxmapR")
+devtools::install_github("pinformatics/approxmapR")
 ```
+
+
 #Setting Up
 
-To load the package we use,
+To load the package use,
 ```{r setting-up}
 library(approxmapR)
 ```
 
-Though, it is not required, we strongly encourage you to use the `tidyverse` package. The `approxmapR` was designed with the same paradigm and hence works cohesively with `tidyverse`. To install and load,
+Though it is not required, it is strongly encouraged to use the `tidyverse` package as well. The `approxmapR` was designed with the same paradigm and hence works cohesively with `tidyverse`. To install and load,
 ```
 install.packages("tidyverse")
 ```
@@ -41,7 +42,7 @@ library(tidyverse)
 
 
 #Motivation
-Now that we have loaded and installed everything we need, let's jump into the problem and motivation for using approxmap. Let's say you have a dataset that looks like this:
+Now that everything is installed and loaded, let's jump into the problem and the motivation for using approxmap. Let's say you have a dataset that looks like this:
 
 ```{r, echo=FALSE}
 data("mvad")
@@ -53,7 +54,7 @@ n_people <- length(unique(mvad$id))
 ```
 
 
-The base data is from the package `TraMineR` (it has been tweaked a little for our problem) and provides the employment status of `r n_people` individuals for each month from 1993 to 1998. Now you are interested in answering the question, "**What are the general sequences of employment that people go through?**". Since there are `r n_people` people, it is not possible for us to decipher what the patterns are by visual inspection. Looking for exact sequences that are present in *all* these people will get us nowhere. 
+The base data is from the package `TraMineR` (it has been tweaked a little for our problem) and provides the employment status of `r n_people` individuals for each month from 1993 to 1998. Now you are interested in answering the question, "**What are the general sequences of employment that people go through?**". Since there are `r n_people` people, it is not possible for us to decipher what the patterns are by visual inspection. Looking for exact sequences that are present in *all* these people will get us nowhere.
 
 So we need to methodically formulate the solution. Let's look at some key terms necessary for doing that:
 
@@ -62,7 +63,7 @@ So we need to methodically formulate the solution. Let's look at some key terms 
 3. **Sequence**: A sequence is an ordered collection of itemsets. This means that the way they are ordered matters.
 4. **Weighted Sequence**: Several sequences put together after multiple alignment. Multiple alignment is beyond the scope of this vignette but please check [this small example](https://en.wikipedia.org/wiki/Levenshtein_distance) to get an intuition.  
 
-Hence, every person (id) in our dataset represents a sequence. We therefore have `r n_people` sequences. Though we can extract a general pattern from all these sequences, a better idea would be to 
+Hence, every person (id) in our dataset represents a sequence. We therefore have `r n_people` sequences. Though we can extract a general pattern from all these sequences, a better idea would be to
 
 1. Group similar sequences into clusters
 2. Create a weighted sequence for each cluster
@@ -77,7 +78,7 @@ Let us go through the sequence of steps involved in analyzing the mvad dataset u
 ##General Instructions
 
 1. Any time you need more information on a particular function, you could, as always, use `?function_name` to get detailed help.
-2. The package uses the `%>%` operator (Ctrl/Cmd + Shift + M). This means you can move from one function to another seamlessly. 
+2. The package uses the `%>%` operator (Ctrl/Cmd + Shift + M). This means you can move from one function to another seamlessly.
 
 ##1. Aggregate the data
 For the algorithm to create sequences, it needs data in the form:
@@ -86,16 +87,16 @@ data("pre_agg")
 pre_agg
 ```
 
-So basically we need to aggregate the dataset i.e. go from dates to aggregations (called as period) in the package. For this we use the `aggregate_sequences()` function. The aggregate sequences takes in a number of parameters. `format` is used to specify the date format, `unit` is used to specify the unit of aggregation - day, week, month and so on, `n_units` is used to specify the number of units to aggregate. So if unit is "week" and n_units is 4, 4 weeks becomes the unit of aggregation. For more information please refer to the function documentation. 
+So basically we need to aggregate the dataset i.e. go from dates to aggregations (called as period) in the package. For this we use the `aggregate_sequences()` function. The aggregate sequences takes in a number of parameters. `format` is used to specify the date format, `unit` is used to specify the unit of aggregation - day, week, month and so on, `n_units` is used to specify the number of units to aggregate. So if unit is "week" and n_units is 4, 4 weeks becomes the unit of aggregation. For more information please refer to the function documentation.
 
-The function also displays some useful statistics about the sequences. 
+The function also displays some useful statistics about the sequences.
 
 ```{r}
 mvad %>%
   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1)
 ```
 
-`approxmapR` also allows for pre-aggregated data through the `pre_aggregated()` function. This function ensures all the right classes are aplied to the data before moving on to the next steps. 
+`approxmapR` also allows for pre-aggregated data through the `pre_aggregated()` function. This function ensures all the right classes are aplied to the data before moving on to the next steps.
 
 ```
 pre_aggregated_df %>%
@@ -103,7 +104,7 @@ pre_aggregated_df %>%
 ```
 
 ##2. Cluster the data
-The next step involves one of the more computationally intensive steps of the algorithm - clustering. To cluster we simply need to pass an aggregated dataframe and the `k` parameter, which refers to the number of nearest neighbours to consider while clustering. In essense, lower the `k` value, higher the number of clusters and vice-versa. Selecting the right value of k is a judgement call that is very specific to the data. 
+The next step involves one of the more computationally intensive steps of the algorithm - clustering. To cluster we simply need to pass an aggregated dataframe and the `k` parameter, which refers to the number of nearest neighbours to consider while clustering. In essense, lower the `k` value, higher the number of clusters and vice-versa. Selecting the right value of k is a judgement call that is very specific to the data.
 
 Since it is a heavy task, we have used caching to store the results. What caching does is compares the aggregated dataframe to the one in memory and if it is identical, then uses the previously computed results to cluster. For turning caching off, use the parameter `use_cache=FALSE`
 ```{r, message=FALSE}
@@ -112,16 +113,16 @@ mvad %>%
     cluster_knn(k = 15)
 ```
 
-The output of the cluster_knn function is a dataframe with 3 columns - 
+The output of the cluster_knn function is a dataframe with 3 columns -
 
-1. cluster (cluster_id) 
+1. cluster (cluster_id)
 2. df_sequences (dataframes of id and sequences corresponding to the cluster)
 3. n which refers to the number of sequences in the cluster and is used to sort the dataframe
 
 ##3. Extract the patterns
 Now that we have clustered, the next step is to calculate a weighted sequence for each cluster. We can do this using the `get_weighted_sequence()` function. However, the `filter_pattern()` function automatically does this for us. So all we need to do is call the `filter_pattern()` with the required threshold and an optional pattern name (default is consensus).
 
-The `threshold` parameter is used to specify the specify the proportion of sequeneces the item must have been present in. 
+The `threshold` parameter is used to specify the specify the proportion of sequeneces the item must have been present in.
 
 ```{r}
 mvad %>%
@@ -130,29 +131,29 @@ mvad %>%
       filter_pattern(threshold = 0.3, pattern_name = "variation")
 ```
 
-We can also chain multiple `filter_pattern()` functions to keep adding patterns. 
+We can also chain multiple `filter_pattern()` functions to keep adding patterns.
 
 ```{r}
-results <- 
+results <-
   mvad %>%
     aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 3, summary_stats=FALSE) %>%
       cluster_knn(k = 15) %>%
         filter_pattern(threshold = 0.3, pattern_name = "variation") %>%
-          filter_pattern(threshold = 0.4, pattern_name = "consensus") 
+          filter_pattern(threshold = 0.4, pattern_name = "consensus")
 ```
 
 ##4. Formatted output
 Though all the algorithmic work is done, the output is hardly readable as the objects of interest are all present as classes. We have not "prettified" the output by design because concealing it would really inhibit additional explaratory possibilities. Instead, we have a simple function that can be called for this - `format_sequence()`
 
 ```{r}
-results %>% format_sequence() 
+results %>% format_sequence()
 ```
 
-Since markdown by default limits the screen content the important output gets truncated. So I have used another paramter called `kable` which can be safely ignored if it doesn't make sense. 
-The format_sequence also has a parameter called `compare` which when TRUE lists the patterns within a cluster row-by-row. The r function `View()` can be chained to opened the output dataframe in the built-in viewer but sometimes the output strings are too large to be viewed there. So we can chain the readr function `write_csv()` to save the output and explore the results in a text editor or excel. 
+Since markdown by default limits the screen content the important output gets truncated. So I have used another paramter called `kable` which can be safely ignored if it doesn't make sense.
+The format_sequence also has a parameter called `compare` which when TRUE lists the patterns within a cluster row-by-row. The r function `View()` can be chained to opened the output dataframe in the built-in viewer but sometimes the output strings are too large to be viewed there. So we can chain the readr function `write_csv()` to save the output and explore the results in a text editor or excel.
 
 ```{r}
-(approxmap_results <- 
+(approxmap_results <-
   mvad %>%
     aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 3, summary_stats=FALSE) %>%
       cluster_knn(k = 15) %>%
@@ -168,7 +169,7 @@ approxmap_results %>% write_csv("approxmap_results.csv")
 #Using `tidyverse` to fully exploit approxmapR
 The output is what is called as a tibble (a supercharged dataframe) that makes it possible to do things like storing a list of tibbles (df_sequences) in a column. To inspect the say the first 2 rows, we can use standard `dplyr` commands.
 ```{r}
-df_sequences <- 
+df_sequences <-
   mvad %>%
   aggregate_sequences(format = "%Y-%m-%d", unit = "month", n_units = 1, summary_stats=FALSE) %>%
     cluster_knn(k = 15) %>%
@@ -178,7 +179,7 @@ df_sequences <-
 df_sequences
 ```
 
-To explore these sequences, we also have tidy print methods. The functional programming toolkit for R, `purrr` provides an efficient means to fully exploit such outputs. 
+To explore these sequences, we also have tidy print methods. The functional programming toolkit for R, `purrr` provides an efficient means to fully exploit such outputs.
 
 ```{r}
 df_sequences %>%
@@ -187,4 +188,3 @@ df_sequences %>%
               mutate(sequence = map_chr(sequence, format_sequence))
           })
 ```
-
