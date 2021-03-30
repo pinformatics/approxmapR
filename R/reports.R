@@ -306,25 +306,95 @@ print_alignments <- function(df) {
     })
 }
 
-align_date_to_seq <- function(id, seq){
+align_date_to_seq <- function(current_id, seq){
+
+  browser()
+
   id_elements <- unlist(seq)
 
   id_dates <-
-    env_dates$df_unaggregated %>%
-    filter(id == id) %>%
+    env_dm$df_aggregated %>%
+    filter(id == current_id) %>%
     pull(date)
+
+  id_period <-
+    env_dm$df_aggregated %>%
+    filter(id == current_id) %>%
+    pull(period)
+
+
 
   new_dates <- rep("_", length(id_elements))
   new_date_index <- 1
+
+  new_period <- rep("_", length(id_elements))
+  new_period_index <- 1
+
+
   for (i in seq(1, length(id_elements))) {
     if (id_elements[i] != "_"){
       new_dates[i] <- id_dates[new_date_index] %>% as.character()
       new_date_index = new_date_index + 1
+
+      new_period[i] <- id_period[new_period_index] %>% as.character()
+      new_period_index = new_period_index + 1
     }
   }
 
-  new_dates %>% str_c(collapse = ", ")
+
+
+  newer_dates <- NULL
+  newer_dates_index <- 1
+
+  for (i in seq(1, length(new_period))) {
+
+    if (i == 1) {
+
+      if (new_period[i] == "_") {
+
+        val = "_"
+
+      } else {
+
+        val <- new_dates[i]
+
+      }
+
+    } else {
+
+      if (new_period[i] == new_period[i - 1]) {
+
+        if (new_period[i] == "_") {
+
+          newer_dates <- c(newer_dates, val)
+          newer_dates_index = newer_dates_index + 1
+
+          val <- new_dates[i]
+
+        } else {
+
+          val <- paste0(val, "; ", new_dates[i])
+
+        }
+
+      } else {
+
+        newer_dates <- c(newer_dates, val)
+        newer_dates_index = newer_dates_index + 1
+
+        val <- new_dates[i]
+      }
+
+    }
+
+  }
+  newer_dates <- c(newer_dates, val)
+
+  newer_dates %>% str_c(collapse = ", ")
+
 }
+
+
 
 #' @export
 save_alignment <- function(x, ...) {

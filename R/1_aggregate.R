@@ -96,6 +96,7 @@ aggregate_sequences <-
     function(unaggregated_data,
              format = "%m-%d-%Y",
              calendar = FALSE,
+             index_date = FALSE,
              unit = "week",
              n_units = 1,
              anchor_table = NA,
@@ -106,12 +107,19 @@ aggregate_sequences <-
              include_date = FALSE,
              summary_stats = TRUE,
              output_directory = "~") {
+
         n_days <- get_n_days(unit, n_units)
 
         names(unaggregated_data) <- c("id", "date", "event")
 
-        unaggregated_data2 <-
-            unaggregated_data %>% mutate(date = readr::parse_date(date, format))
+        if (index_date) {
+
+          unaggregated_data2 <- unaggregated_data
+
+        } else {
+
+          unaggregated_data2 <- unaggregated_data %>% mutate(date = readr::parse_date(date, format))
+       }
 
         .GlobalEnv$env_dates <- new.env()
         .GlobalEnv$env_dates$df_unaggregated <- unaggregated_data2 %>% arrange(id,date)
@@ -140,8 +148,7 @@ aggregate_sequences <-
                                           ceiling(n_ndays)),
                     agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)
                 ) %>% arrange(id,
-                              agg_n_ndays) %>% m
-            utate(agg_period = dense_rank(agg_n_ndays))
+                              agg_n_ndays) %>% mutate(agg_period = dense_rank(agg_n_ndays))
 
         } else if (calendar) {
             aggregated_data <-
@@ -167,15 +174,28 @@ aggregate_sequences <-
                 group_by(id) %>% arrange(id, agg_n_ndays) %>%
                 mutate(agg_period = dense_rank(agg_n_ndays))
 
-        } else {
+        } else if (index_date) {
+
+            aggregated_data <-
+                unaggregated_data2 %>%
+                group_by(id) %>%
+                mutate(
+                    n_ndays = date / (as.numeric(n_days) / (60 * 60 * 24)),
+                    agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays), ceiling(n_ndays)),
+                    agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)
+                ) %>%
+                print() %>%
+                arrange(id, agg_n_ndays) %>%
+                mutate(agg_period = dense_rank(agg_n_ndays))
+
+        }  else {
             aggregated_data <-
                 unaggregated_data2 %>%
                 group_by(id) %>%
                 mutate(
                     n_ndays = (date - occurence(date)) / n_days,
                     agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays), ceiling(n_ndays)),
-                    agg_n_ndays = if_else(agg_n_ndays ==
-                                              0, 1, agg_n_ndays)
+                    agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)
                 ) %>%
                 print() %>%
                 arrange(id, agg_n_ndays) %>%

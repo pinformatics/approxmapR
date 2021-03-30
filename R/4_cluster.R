@@ -513,7 +513,9 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
            y = measure)  +
 
 
-     coord_cartesian(xlim = c(min(k_info$k), max(k_info$k)))
+     coord_cartesian(xlim = c(min(k_info$k), max(k_info$k))) +
+
+     scale_x_continuous(labels = as.character(k_info$k), breaks = k_info$k)
 
 
 
@@ -528,7 +530,9 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
            x = "K Value",
            y = measure) +
 
-      coord_cartesian(xlim = c(min(k_info$k), max(k_info$k)))
+      coord_cartesian(xlim = c(min(k_info$k), max(k_info$k))) +
+
+      scale_x_continuous(labels = as.character(k_info$k), breaks = k_info$k)
 
 
 
