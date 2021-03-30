@@ -148,8 +148,7 @@ aggregate_sequences <-
                                           ceiling(n_ndays)),
                     agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)
                 ) %>% arrange(id,
-                              agg_n_ndays) %>% m
-            utate(agg_period = dense_rank(agg_n_ndays))
+                              agg_n_ndays) %>% mutate(agg_period = dense_rank(agg_n_ndays))
 
         } else if (calendar) {
             aggregated_data <-
@@ -196,8 +195,7 @@ aggregate_sequences <-
                 mutate(
                     n_ndays = (date - occurence(date)) / n_days,
                     agg_n_ndays = if_else(n_ndays < 0, floor(n_ndays), ceiling(n_ndays)),
-                    agg_n_ndays = if_else(agg_n_ndays ==
-                                              0, 1, agg_n_ndays)
+                    agg_n_ndays = if_else(agg_n_ndays == 0, 1, agg_n_ndays)
                 ) %>%
                 print() %>%
                 arrange(id, agg_n_ndays) %>%
