@@ -308,7 +308,7 @@ print_alignments <- function(df) {
 
 align_date_to_seq <- function(current_id, seq){
 
-  browser()
+  #browser()
 
   id_elements <- unlist(seq)
 
