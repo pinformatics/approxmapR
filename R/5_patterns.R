@@ -149,7 +149,7 @@ format_sequence.W_Sequence_Pattern <-
             ) %>%
             pull(element_html) %>%
             str_c(collapse = ", ") %>%
-            paste0("(", ., ")")
+            paste0("(", ., ")", "<br>")
         }) %>%
         str_c(collapse = " ")
 
@@ -160,7 +160,7 @@ format_sequence.W_Sequence_Pattern <-
             str_c(w_itemset$elements, collapse = ", ") %>%
               paste0("(", ., ")")
           }
-          else{
+          else {
             NA
           }
 
@@ -192,4 +192,74 @@ print.W_Sequence_Pattern_List <-
     walk(w_sequence_pattern_list, function(w_sequence_pattern) {
       cat(format_sequence(w_sequence_pattern), "\n")
     })
+  }
+
+
+
+
+
+#' @export
+format_sequence.percentage_bar <-
+  function(w_sequence_pattern, html_format = FALSE) {
+    n <- attr(w_sequence_pattern, "n")
+
+    if (html_format) {
+      if(n > 1){
+        colors <-
+          rev(colormap::colormap(colormap = "bluered", nshades = n) %>%
+                stringr::str_sub(1, -3))
+      } else {
+        colors <- colormap::colormap(nshades = 2)[1]
+      }
+
+      # cuts <- floor(n*seq(0,1,0.2))[2:5]
+      w_sequence_pattern %>%
+        map_chr(function(w_itemset) {
+          tibble(
+            element = as.character(w_itemset$elements),
+            weight = as.integer(w_itemset$element_weights)
+          ) %>%
+            mutate(
+              ratio = weight / n,
+              # color = colors[floor(ratio*n)],
+              color = colors[weight],
+              font_size = paste0(floor((1 + ratio * .6) * 100), "%"),
+              font_weight = signif(460 + ratio * 340, 1),
+              otag = str_c(
+                '<span style="',
+                "color: ",
+                color,
+                "; ",
+                "font-size: ",
+                font_size,
+                "; ",
+                "font-weight: ",
+                font_weight,
+                ";",
+                '">'
+              ),
+              ctag = "</span>",
+              element_html = str_c(otag, element, ctag)
+            ) %>%
+            pull(element_html) %>%
+            str_c(collapse = ", ") %>%
+            paste0("(", ., ")")
+        }) %>%
+        str_c(collapse = " ")
+
+    } else {
+      w_sequence_pattern %>%
+        map_chr(function(w_itemset) {
+          if (length(w_itemset$elements) > 0) {
+            str_c(w_itemset$elements, collapse = ", ") %>%
+              paste0("(", ., ")")
+          }
+          else {
+            NA
+          }
+
+        }) %>%
+        .[!is.na(.)] %>%
+        str_c(collapse = " ")
+    }
   }

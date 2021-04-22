@@ -12,8 +12,7 @@ the dataframe that resulted from extracting the patterns after clustering.}
 
 \item{html_format}{A boolean value to indicate if the exports should have HTML formatting.}
 
-\item{output_directory}{The path to where the exports should be placed. This creats a
-folder with the name of "approxmap_results".}
+\item{output_directory}{The path to where the exports should be placed. This creates a folder with the name of "approxmap_results".}
 
 \item{end_filename_with}{The option of appending to the end of the default file names. This
 is useful if running multiple algorithms that will be exported to the same output_directory.}

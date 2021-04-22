@@ -42,8 +42,31 @@ generate_reports <- function(w_sequence_dataframe,
                              # truncate_patterns = FALSE,
                              output_directory = "~",
                              end_filename_with = "",
+                             sequence_analysis_details = NULL,
                              algorithm_comparison = FALSE) {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
+
+  if (!is.null(sequence_analysis_details)) {
+    if (!"list" %in% class(sequence_analysis_details)) {
+      stop("Error: sequence_analysis_details must be a list class.")
+    }
+
+    if (!"algorithm" %in% names(sequence_analysis_details))  {
+      stop("Error: Missing the algorithm parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold parameters, and notes.")
+    }
+    if (!"k_value" %in% names(sequence_analysis_details)) {
+      stop("Error: Missing the k_value parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold parameters, and notes.")
+    }
+    if (!"time_period" %in% names(sequence_analysis_details)) {
+      stop("Error: Missing the time_period parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold parameters, and notes.")
+    }
+    if (!"consensus_threshold" %in% names(sequence_analysis_details)) {
+      stop("Error: Missing the consensus_threshold parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold parameters, and notes.")
+    }
+    if (!"notes" %in% names(sequence_analysis_details)) {
+      stop("Error: Missing the notes parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold parameters, and notes.")
+    }
+  }
 
   folder = "approxmap_results"
   output_directory <- create_folder(output_directory, folder)
@@ -52,8 +75,13 @@ generate_reports <- function(w_sequence_dataframe,
   output_directory_private <-
     create_folder(output_directory, "private")
 
-  report_rmd <-
-    system.file("rmd_w_sequence.Rmd", package = "approxmapR")
+
+  # Checking which report file structure to be used
+  if (!is.null(sequence_analysis_details)) {
+    report_rmd <- system.file("rmd_w_sequence_analysis_details.Rmd", package = "approxmapR")
+  } else {
+    report_rmd <- system.file("rmd_w_sequence.Rmd", package = "approxmapR")
+  }
 
 
 
@@ -101,26 +129,50 @@ generate_reports <- function(w_sequence_dataframe,
     bind_rows(df_unique_items) %>%
     arrange(cluster)
 
-  rmarkdown::render(
-    report_rmd,
-    params = list(input = formatted,
-                  title = "All Sequences"),
-    #output_file = file_check(output_directory_private, "all_sequences.html"),
-    output_file = file_check(output_directory_private, paste0("all_sequences", end_filename_with, ".html")),
-    output_dir = output_directory_private
-  )
+  if (!is.null(sequence_analysis_details)) {
+    rmarkdown::render(
+      report_rmd,
+      params = append(list(input = formatted,
+                           title = "All Sequences"), sequence_analysis_details),
+                    #output_file = file_check(output_directory_private, "all_sequences.html"),
+                    output_file = file_check(output_directory_private, paste0("all_sequences", end_filename_with, ".html")),
+                    output_dir = output_directory_private
+                  )
+  } else {
+    rmarkdown::render(
+      report_rmd,
+      params = list(input = formatted,
+                    title = "All Sequences"),
+                    #output_file = file_check(output_directory_private, "all_sequences.html"),
+                    output_file = file_check(output_directory_private, paste0("all_sequences", end_filename_with, ".html")),
+                    output_dir = output_directory_private
+                  )
+  }
+
+
   patterns <-
     formatted %>%
     filter(pattern != "weighted_sequence")
 
-  rmarkdown::render(
-    report_rmd,
-    params = list(input = patterns,
-                  title = "Patterns"),
-    #output_file = file_check(output_directory_public, "patterns.html"),
-    output_file = file_check(output_directory_public, paste0("patterns", end_filename_with, ".html")),
-    output_dir = output_directory_public
-  )
+  if (!is.null(sequence_analysis_details)) {
+    rmarkdown::render(
+      report_rmd,
+      params = append(list(input = patterns,
+                           title = "Patterns"), sequence_analysis_details),
+                    #output_file = file_check(output_directory_public, "patterns.html"),
+                    output_file = file_check(output_directory_public, paste0("patterns", end_filename_with, ".html")),
+                    output_dir = output_directory_public
+                  )
+ } else {
+   rmarkdown::render(
+     report_rmd,
+     params = list(input = patterns,
+                   title = "Patterns"),
+                   #output_file = file_check(output_directory_public, "patterns.html"),
+                   output_file = file_check(output_directory_public, paste0("patterns", end_filename_with, ".html")),
+                   output_dir = output_directory_public
+                 )
+ }
 
 
   w_sequences <-
@@ -128,14 +180,25 @@ generate_reports <- function(w_sequence_dataframe,
     filter(pattern == "weighted_sequence") %>%
     select(-pattern)
 
-  rmarkdown::render(
-    report_rmd,
-    params = list(input = w_sequences,
-                  title = "Weighted Sequences"),
-    #output_file = file_check(output_directory_private, "weighted_sequences.html"),
-    output_file = file_check(output_directory_private, paste0("weighted_sequences", end_filename_with, ".html")),
-    output_dir = output_directory_private
-  )
+  if (!is.null(sequence_analysis_details)) {
+    rmarkdown::render(
+      report_rmd,
+      params = append(list(input = w_sequences,
+                           title = "Weighted Sequences"), sequence_analysis_details),
+                    #output_file = file_check(output_directory_private, "weighted_sequences.html"),
+                    output_file = file_check(output_directory_private, paste0("weighted_sequences", end_filename_with, ".html")),
+                    output_dir = output_directory_private
+                  )
+ } else {
+   rmarkdown::render(
+     report_rmd,
+     params = list(input = w_sequences,
+                   title = "Weighted Sequences"),
+                   #output_file = file_check(output_directory_private, "weighted_sequences.html"),
+                   output_file = file_check(output_directory_private, paste0("weighted_sequences", end_filename_with, ".html")),
+                   output_dir = output_directory_private
+                 )
+ }
 
   # output_directory_alignments <- create_folder(output_directory_private, "alignments")
 
