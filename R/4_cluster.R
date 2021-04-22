@@ -271,12 +271,6 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FA
 
 
 
-  #######
-
-  #message("Clustering Based on PAM Algorithm")
-  #res <- pam(distance_matrix, k = k, diss = TRUE)
-
-
   df_cluster$cluster_id <- res$cluster
 
 
@@ -310,14 +304,26 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FA
 
 
 #' @export
-find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10, validation_measure = 'silhouette', use_cache = TRUE) {
+find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10, validation_measure = 'silhouette',
+                           use_cache = TRUE,
+                           save_graph = TRUE, graph_file_name = "Optimal K Graph.png", size_width = 855, size_height = 317, output_directory = "~") {
 
+  # Testing valid parameter entries
+  if (!clustering %in% list("k-nn", "k-medoids")) {
+    stop("Error: Not a valid clustering algorithm. Must be 'k-nn' or 'k-medoids'.")
+  }
+
+  if (save_graph) {
+    if (!endsWith(graph_file_name, ".png")) {
+      stop("Error: The graph file name must end with '.png'. Only PNG images are supported at this time.")
+    }
+  }
 
   # Using cached information if present, otherwise calculating it and storing
   #   it as an environment variable
   stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))
 
-  message("Clustering... \n")
+  message("Clustering... \n \n")
 
   if (exists("env_dm", envir = globalenv()) && identical(.GlobalEnv$env_dm$df_aggregated, df_aggregated)) {
     if (use_cache) {
@@ -354,6 +360,16 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
       distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
       distance_matrix[is.na(distance_matrix)] = 0
     }
+  }
+
+  if (max_k == dim(distance_matrix)[1]) {
+
+    message("\n \n Specified max_k value is too large for the size of the data, i.e. greater than the number of observations - 1 ... \n")
+    message("Setting max_k to maximum allowable value and proceeding ... \n \n")
+    message(cat("Set max_k to ", max_k - 1, " and run again ... \n \n"))
+
+    stop()
+
   }
 
 
@@ -394,39 +410,54 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
       }
 
       cluster_id <- clustered %>% unnest(df_sequences) %>% select(id, cluster) %>% arrange(id)
-      clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster)
 
+      if (max(clustered$cluster) == 1) {
 
+        k[i] <- i
+        n_clusters[i] <- 1
+        cluster_size[i] <- toString(clustered$n)
+        average_between[i] <- NA
+        average_within[i] <- NA
+        within_cluster_ss[i] <- NA
+        dunn[i] <- NA
+        wb_ratio[i] <- NA
 
-      k[i] <- i
-      n_clusters[i] <- clust_stats$cluster.number
-      cluster_size[i] <- toString(clust_stats$cluster.size)
-      average_between[i] <- clust_stats$average.between
-      average_within[i] <- clust_stats$average.within
-      within_cluster_ss[i] <- clust_stats$within.cluster.ss
-      dunn[i] <- clust_stats$dunn
-      wb_ratio[i] <- clust_stats$wb.ratio
+        # Calculating information for silhouette
+        sil <- NA
 
+        nobs <- NA
+        x_bar <- NA
+        error <- NA
 
+        average_silhouette_width_lower_ci[i] <- NA
+        average_silhouette_width[i] <- NA
+        average_silhouette_width_upper_ci[i] <- NA
 
-      #matrix_cluster <- model.matrix(~factor(cluster_id$cluster) + 0)
-      #n_matrix <- (1/t(matrix_cluster) %*% matrix_cluster)
-      #n_matrix[is.infinite(n_matrix)] = 0
+      } else {
 
-      #sum_diss[i] <- sum((t(matrix_cluster) %*% distance_matrix %*% matrix_cluster * n_matrix))
+        clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster)
 
+        k[i] <- i
+        n_clusters[i] <- clust_stats$cluster.number
+        cluster_size[i] <- toString(clust_stats$cluster.size)
+        average_between[i] <- clust_stats$average.between
+        average_within[i] <- clust_stats$average.within
+        within_cluster_ss[i] <- clust_stats$within.cluster.ss
+        dunn[i] <- clust_stats$dunn
+        wb_ratio[i] <- clust_stats$wb.ratio
 
+        # Calculating information for silhouette
+        sil <- silhouette(cluster_id$cluster, dmatrix = distance_matrix)
 
-      # Calculating information for silhouette
-      sil <- silhouette(cluster_id$cluster, dmatrix = distance_matrix)
+        nobs <- dim(sil)[1]
+        x_bar <- mean(sil[,3])
+        error <- qt(0.975, df = nobs - 1) * sd(sil[, 3])/sqrt(nobs)
 
-      nobs <- dim(sil)[1]
-      x_bar <- mean(sil[,3])
-      error <- qt(0.975, df = nobs - 1) * sd(sil[, 3])/sqrt(nobs)
+        average_silhouette_width_lower_ci[i] <- x_bar - error
+        average_silhouette_width[i] <- x_bar
+        average_silhouette_width_upper_ci[i] <- x_bar + error
 
-      average_silhouette_width_lower_ci[i] <- x_bar - error
-      average_silhouette_width[i] <- x_bar
-      average_silhouette_width_upper_ci[i] <- x_bar + error
+      }
 
     }
 
@@ -484,14 +515,6 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
 
   }
 
-  #else if (validation_measure == 'sum_diss') {
-
-  #    measure = 'Sum of Dissimilarities'
-  #    measure_values = k_info$sum_diss
-
-  #}
-
-
 
   if (validation_measure == 'silhouette') {
 
@@ -504,11 +527,11 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
                     width = .25,
                     color = "#20B2AA") +
 
-      geom_vline(xintercept = which.max(k_info$average_silhouette_width) + 1,
+      geom_vline(xintercept = k_info$k[which.max(k_info$average_silhouette_width)],
                  color = "#20B2AA", linetype = 'dashed') +
 
       labs(title = "Optimal K Plot",
-           subtitle = paste0("k =", which.max(k_info$average_silhouette_width) + 1, "; Max average silhouette width = ", round(max(k_info$average_silhouette_width), digits = 3)),
+           subtitle = paste0("k =", k_info$k[which.max(k_info$average_silhouette_width)], "; Max average silhouette width = ", round(k_info$average_silhouette_width[which.max(k_info$average_silhouette_width)], digits = 3)),
            x = "K Value",
            y = measure)  +
 
@@ -537,6 +560,30 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
 
 
   }
+
+
+
+
+
+  # This portion saves the graph if the option is selected
+  if (save_graph) {
+    output_directory <- create_folder(output_directory, "approxmap_results")
+    output_directory_graphs <- create_folder(output_directory, "graphs")
+
+    sink(paste0(output_directory_graphs,
+                "/",
+                file_check(output_directory_graphs,
+                           graph_file_name)),
+         split = TRUE)
+
+    png(file = paste0(output_directory_graphs, "/", graph_file_name), width = size_width, height = size_height)
+    print(k_plot)
+    dev.off()
+
+    sink()
+
+  }
+
 
   print(k_plot)
   return(k_info)

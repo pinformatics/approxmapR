@@ -3,7 +3,8 @@
 \title{Clustering Functions}
 \usage{
   find_optimal_k(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10,
-  validation_measure = 'silhouette', use_cache = TRUE)
+  validation_measure = 'silhouette', use_cache = TRUE,
+  save_graph = TRUE, graph_file_name = "Optimal K Graph.png", size_width = 855, size_height = 317, output_directory = "~")
 }
 \arguments{
 \item{df_aggregated}{A dataframe that has been aggregated using either aggregate_sequences(), or pre_aggregated()
@@ -29,9 +30,22 @@ cuurently supported:
 
     * Ratio of average distance within cluster / average distance between clusters (validation_measure = 'wb_ratio')
 
-    * Sum of average distance within clusters (validation_measure = 'sum_diss')}
+    * Half the sum of the within cluster squared dissimilarities divided by the cluster size (validation_measure = 'within_cluster_ss')}
 
 \item{use_cache}{A boolean value to indicate weather or not to use the cached distance matrix.}
+
+\item{save_graph}{Default value is TRUE which will save the graph as a PNG file.}
+
+\item{graph_file_name}{Allows user to specify the file name for the graph that is being saved.}
+
+\item{graph_file_name}{Allows user to specify the file name for the graph that is being saved.}
+
+\item{size_width}{The width of the graph.}
+
+\item{size_height}{The height of the graph.}
+
+\item{output_directory}{The path to where the exports should be placed. This creates a folder with the name of "approxmap_results".}
+
 }
 \value{
 Returns a dataframe with the K value, number of clusters, size of clusters, average silhouette

@@ -531,7 +531,7 @@ format_sequence.W_Sequence <-
             ) %>%
             pull(element_html) %>%
             str_c(collapse = ", ") %>%
-            paste0("(", ., ")", ":", w_itemset$itemset_weight)
+            paste0("(", ., ")", ":", w_itemset$itemset_weight, "<br>")
         }) %>%
         str_c(collapse = " ") %>%
         paste0("<", ., ">", " : ", n) %>%

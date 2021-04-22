@@ -148,7 +148,7 @@ format_sequence.W_Sequence_Pattern_Compressed <-
                         ) %>%
                         pull(element_html) %>%
                         str_c(collapse = ", ") %>%
-                        paste0("(", ., ")", ":", w_itemset$itemset_weight)
+                        paste0("(", ., ")", ":", w_itemset$itemset_weight, "<br>")
                 }) %>%
                 str_c(collapse = " ") %>%
                 paste0("<", ., ">", " : ", n) %>%
@@ -169,7 +169,7 @@ format_sequence.W_Sequence_Pattern_Compressed <-
                 }) %>%
                 .[!is.na(.)] %>%
                 str_c(collapse = " ") %>%
-                paste0("<", ., ">", " : ", n)
+                paste0("<", ., "<br>", ">", " : ", n)
         }
 
     }
@@ -203,7 +203,7 @@ plot_weighted_sequence <- function(w_sequence) {
 
 #' @export
 convert_to_events <- function(data, id_column, sequence_column) {
-  
+
   data %>%
     mutate(event_set = str_split(data[[sequence_column]], "[\\(\\)]")) %>%
     unnest(cols = c(event_set)) %>%

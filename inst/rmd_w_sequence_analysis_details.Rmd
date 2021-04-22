@@ -5,11 +5,24 @@ output:
 params:
   input: NA
   title: NA
+  algorithm: NA
+  k_value: NA
+  time_period: NA
+  consensus_threshold: NA
+  notes: NA
 ---
 
 ---
 title: `r params$title`
 ---
+
+The current sequential analysis was conducted using the ApproxMAP algorithm with the following parameters:
+
+* Clustering algorithm: `r params$algorithm`
+* K value: `r params$k_value`
+* Grouping time period: `r params$time_period`
+* Consensus pattern threshold: `r params$consensus_threshold`
+* Any special notes: `r params$notes`
 
 ```{r, echo=FALSE, out.width='100%'}
 library(knitr)
