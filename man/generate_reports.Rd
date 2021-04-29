@@ -4,6 +4,7 @@
 \usage{
   generate_reports(w_sequence_dataframe, html_format = TRUE,
                   output_directory = "~", end_filename_with = "",
+                  sequence_analysis_details = NULL,
                   algorithm_comparison = FALSE)
 }
 \arguments{
@@ -16,6 +17,9 @@ the dataframe that resulted from extracting the patterns after clustering.}
 
 \item{end_filename_with}{The option of appending to the end of the default file names. This
 is useful if running multiple algorithms that will be exported to the same output_directory.}
+
+\item{sequence_analysis_details}{This will generate a report that includes details pertaining to the sequence analysis. This
+must be a list with the following structure list("algorithm" = "a string", "k_value" = a number, "time_period" = "a string", "consensus_threshold" = a number, "notes" = "Any special notes as a string.")}
 
 \item{algorithm_comparison}{The option to indicate if the report being generated is
 one that is comparing multiple algorithms, for example the outcome of using the K-NN
