@@ -5,11 +5,11 @@
 A function which finds patterns and has the ability to handle regular expression using the
 R syntax. For ease, some shorthands have been created for common pattern structures.
 
-    * "event*," will translate into "[[:alnum:], ]*" and will match an event zero or more times.
-    * "event+," will translate into "[[:alnum:], ]+" and will match an event one or more times.
-    * "**" will translate into "[[:print:]]*" and will match any printable characters which are: [:alnum:], [:punct:] and space.
-    * "eventset*, " will translate into "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*" and will match an event set structure zero or more times.
-    * "eventset+, " will translate into "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*" and will match an event set structure one or more times.
+\item{"event*,"}{will translate into "[[:alnum:], ]*" and will match an event zero or more times.}
+\item{"event+,"}{will translate into "[[:alnum:], ]+" and will match an event one or more times.}
+\item{"**"}{will translate into "[[:print:]]*" and will match any printable characters which are: [:alnum:], [:punct:] and space.}
+\item{"eventset*, "}{will translate into "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*" and will match an event set structure zero or more times.}
+\item{"eventset+, "}{will translate into "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*" and will match an event set structure one or more times.}
 }
 \usage{
   Pulls the observations that match an event, event set, sequence, or a list which contains
@@ -48,6 +48,5 @@ pats <- clustered %>% filter_pattern(threshold = 0.3, pattern_name = "consensus"
 pattern_search(pats, find_pattern = "(event*, L)")
 
 # Find all sequences which contain any event sets before and after the event set (K, M)
-finds <- list("<(I, M), (K), (K, M), (L, M)>", "Z", "(I, J)")
-pattern_search(pats, find_pattern = finds)
+pattern_search(pats, find_pattern = "eventset*, (K, M), eventset*")
 }
