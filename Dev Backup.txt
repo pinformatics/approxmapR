@@ -1,0 +1,392 @@
+library(approxmapR)
+library(kableExtra)
+library(knitr)
+options(knitr.table.format = "html")
+library(tidyverse)
+#library(TraMineR)
+
+
+
+
+
+data("demo1")
+demo1 <- data.frame(do.call("rbind", strsplit(as.character(demo1$id.date.item), ",")))
+names(demo1) <- c("id", "period", "event")
+
+# Copying ID = 8 to switch the last 2 events
+to_add <- demo1 %>% filter(id == 8)
+to_add$id <- 808
+to_add[6, 3] <- "M"
+to_add[7, 3] <- "L"
+
+demo1 <- rbind(demo1, to_add)
+
+# Copying ID 8 again and removing some event sets
+to_add <- demo1 %>% filter(id == 8)
+to_add$id <- 8082
+to_add <- to_add[-c(5), ]
+
+demo1 <- rbind(demo1, to_add)
+
+
+# Copying ID = 7 to test specificity of regex; only keepying the first eventset
+to_add <- (demo1 %>% filter(id == 7))[1:3, 1:3]
+to_add$id <- 707
+
+demo1 <- rbind(demo1, to_add)
+
+
+
+#### Add this to find
+# (event*, K, event+, M**)**(event*, I, event+, J**)
+to_add <- demo1 %>% filter(id == 8)
+to_add$id <- 8083
+
+# (event*, K, event+, M**)
+to_add[1:4, 3] <- c("I", "K", "Z", "M")
+to_add[3:4, 2] <- c("12/20/2015", "12/21/2015")
+
+# **
+to_add[6, 2:3] <- c("7/23/2016", "B")
+to_add[7, 2:3] <- c("7/24/2016", "C")
+
+# (event*, I, event+, J**)
+to_add <- rbind(to_add, c("8083", "2/02/2017", "Z"))
+to_add <- rbind(to_add, c("8083", "2/03/2017", "I"))
+to_add <- rbind(to_add, c("8083", "2/04/2017", "Z"))
+to_add <- rbind(to_add, c("8083", "2/05/2017", "Z"))
+to_add <- rbind(to_add, c("8083", "2/05/2017", "J"))
+to_add <- rbind(to_add, c("8083", "2/06/2017", "Z"))
+to_add <- rbind(to_add, c("8083", "2/07/2017", "Z"))
+
+demo1 <- rbind(demo1, to_add)
+
+
+
+agg <- demo1 %>% aggregate_sequences(format = "%m/%d/%Y",
+                                     unit = "month",
+                                     n_units = 1,
+                                     summary_stats = FALSE)
+
+#ktable <- agg %>% find_optimal_k(clustering = "k-nn",
+#                                 min_k = 2, max_k = 9, use_cache = TRUE, save_graph = FALSE)
+
+clustered <- agg %>% cluster_kmedoids(k = 2, use_cache = TRUE)
+
+pats <- clustered %>% filter_pattern(threshold = 0.3, pattern_name = "consensus")
+
+#pats %>% generate_reports(sequence_analysis_details =
+#                            list("algorithm" = "k-nn",
+#                                 "k_value" = 3,
+#                                 "time_period" = "month",
+#                                 "consensus_threshold" = 0.3,
+#                                 "notes" = "Development of pattern search functionality"))
+
+
+
+
+
+###########################################
+#  Pattern Search Development below Here  #
+###########################################
+
+# -sequencer- is a slightly modified version of -format_sequence- in that it adds
+#   a comma between event sets in a sequence for the id
+sequencer <- function(sequence) {
+  sequence <- sequence %>% map_chr(function(itemset) {
+    itemset <- str_c(itemset, collapse = ", ")
+    paste0("(", itemset, ")")
+  }) %>%
+    str_c(collapse = ", ")
+  sequence <- paste0("<", sequence, ">")
+  as.character(sequence)
+}
+
+
+sequencer2 <- function(sequence) {
+  sequence <- sequence %>% map_chr(function(itemset) {
+    itemset <- str_c(itemset, collapse = " ")
+    paste0("(", itemset, ")")
+  }) %>%
+    str_c(collapse = ", ")
+  sequence <- paste0("<", sequence, ">")
+  as.character(sequence)
+}
+
+
+temp <- pats %>% select(cluster, n, df_sequences) %>% unnest(cols = c(df_sequences)) %>% mutate(sequences = map_chr(sequence, sequencer))
+temp2 <- pats %>% select(cluster, n, df_sequences) %>% unnest(cols = c(df_sequences)) %>% mutate(sequences = map_chr(sequence, sequencer2))
+
+
+pattern_search2 <- function(Clustered_Dataframe, find_pattern = NULL) {
+
+
+  ## Checking parameters and criteria - checks verified ##
+  if (!"Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    stop("Error: Data structure is not the appropriate class. Needs to be of 'Clustered_Dataframe' class.")
+  }
+
+  if (!"df_sequences" %in% names(Clustered_Dataframe)) {
+    stop("Error: Missing the required 'df_sequences' column.")
+  }
+
+  if (is.null(find_pattern)) {
+    stop("Error: find_pattern parameter is NULL.")
+  }
+
+  if ("Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    # This is code to find the pattern for the clustered dataframe. This is
+    #   class is produced during the clustering step and/or after filter_pattern
+    #   which finds the consensus patterns.
+    df_seq <- Clustered_Dataframe %>%
+      select(cluster, n, df_sequences) %>%
+      unnest(cols = c(df_sequences))
+    df_seq <- df_seq %>% mutate(sequences = map_chr(sequence, sequencer))
+  }
+
+
+  # Now to pull the IDs with the pattern(s)
+  # print(find_pattern)
+  if (length(find_pattern) > 1) {
+    count <- 1
+    for (pattern in find_pattern) {
+      #print(pattern)
+      if (count == 1) {
+        to_pull <- str_detect(df_seq$sequences, pattern)
+        count = count + 1
+      } else {
+        to_pull_n <- str_detect(df_seq$sequences, pattern)
+        count = count + 1
+        to_pull <- replace(to_pull, to_pull_n, TRUE)
+      }
+    }
+  } else {
+    pattern <- find_pattern
+    to_pull <- str_detect(df_seq$sequences, pattern)
+  }
+  df_seq <- subset.data.frame(df_seq, subset = to_pull)
+  df_seq %>% select(cluster, id, sequence, sequences)
+}
+
+
+
+
+
+##########################
+# Test Cases below Here  #
+##########################
+
+#     cluster   n       id       sequence         sequences
+#     <int>    <int>  <chr>     <Sqnc_Lst>        <chr>
+#         1     8       6       <Sequence [2]>    <(I, J), (L, M)>
+#         1     8       7       <Sequence [2]>    <(I, J, K), (J, K, L, M)>
+#         1     8       9       <Sequence [1]>    <(J, K, L, M)>                  (TC.1) Find based on 'K' and 'M'
+#         1     8       5       <Sequence [2]>    <(B, I, J), (K, L)>
+#         1     8       3       <Sequence [1]>    <(A, I, K, L, M, Z)>            (TC.3) Find based on 'K', 'Z' and as long as in same event set
+#         1     8       513     <Sequence [4]>    <(I, M), (K), (K, M), (L, M)>   (TC.2) Find based on 'M', anything between, and (L, M)
+#         1     8       8       <Sequence [4]>    <(I, M), (K), (K, M), (L, M)>
+#         1     8       10      <Sequence [2]>    <(K, V, W), (Z)>
+#         2     3       4       <Sequence [1]>    <(A, D, E, L)>
+#         2     3       1       <Sequence [1]>    <(A, B, C, D, Y)>
+#         2     3       2       <Sequence [1]>    <(A, B, C, D, Y)>
+
+
+##### Woring test cases #####
+
+# (TC.1) Find based on 'K' and 'M'
+pattern_search2(pats, find_pattern = "\\([[:alnum:],]* K, [[:alnum:],]+ M\\)")
+pattern_search3(pats, find_pattern = "(event*, K, event+, M**)", event_set = TRUE)
+
+
+# (TC.2) Find based on 'M', anything between, and (L, M)
+pattern_search2(pats, find_pattern = "M[[:print:]]+\\(L, M\\)")
+pattern_search3(pats, find_pattern = "M**(L, M)", event_set = TRUE)
+
+
+# (TC.3) Find based on 'K', 'Z' and as long as in same event set
+pattern_search2(pats, find_pattern = "\\([[:alnum:], ]*K, [[:alnum:], ]*Z\\)")
+pattern_search3(pats, find_pattern = "(event*, K, event+, Z)", event_set = TRUE)
+
+
+
+# (TC.4) Find all sequences with events 'A' and 'D' in the sequence
+pattern_search2(pats, find_pattern = "A, [[:alnum:], ]*D")
+
+
+pattern_search2(pats, find_pattern = "A | D")
+
+pattern_search3(pats, find_pattern = "A | D")
+
+
+
+# (TC.5) Find based on specified event set, anything, specified event set;
+#           e.g., (possible_events_before, K, possible_events_between, M, possible_events_after), possible_event_sets_between, (possible_events_before, I, possible_events_between, J, possible_events_after)
+
+pattern_search3(pats, find_pattern = "(event*, K, event*, M**)**(event*, I, event*, J**)", event_set = TRUE)
+pattern_search3(pats, find_pattern = "(**K**M**)**(**I**J**)", event_set = TRUE)
+pattern_search3(pats, find_pattern = "**(event*, K, event*, M**)**(event*, I, event*, J**)**", event_set = TRUE)
+
+#################################
+# Testing Specificity of (TC.1) #
+#################################
+
+#         cluster  n      id     sequence        sequences
+#        <int>    <int>  <chr>  <Sqnc_Lst>      <chr>
+#         1        12     7     <Sequence [2]>  <(I, J, K), (J, K, L, M)>
+#         1        12     9     <Sequence [1]>  <(J, K, L, M)>
+#         1        12     5     <Sequence [2]>  <(B, I, J), (K, L)>
+#         1        12     707   <Sequence [1]>  <(I, J, K)>
+#         1        12     3     <Sequence [1]>  <(A, I, K, L, M, Z)>
+#         1        12     4     <Sequence [1]>  <(A, D, E, L)>
+#         1        12     6     <Sequence [2]>  <(I, J), (L, M)>
+#         1        12     10    <Sequence [2]>  <(K, V, W), (Z)>
+#         1        12     8     <Sequence [4]>  <(I, M), (K), (K, M), (L, M)>
+#         1        12     808   <Sequence [4]>  <(I, M), (K), (K, M), (L, M)>
+#         1        12     1     <Sequence [1]>  <(A, B, C, D, Y)>
+#         1        12     2     <Sequence [1]>  <(A, B, C, D, Y)>
+
+
+
+
+
+
+
+
+
+
+
+pattern_search2(pats, find_pattern = fixed("(L, M)"))
+pattern_search2(pats, find_pattern = "L, M")
+pattern_search2(pats, find_pattern = "\\(L, M\\)")
+
+# This pulls everything
+pattern_search2(pats, find_pattern = "\\([[:print:]]+\\)")
+
+
+# This pulls the sequences that contain an event set with I, J, or M in it
+pattern_search2(pats, find_pattern = "\\([IJM], [IJM]\\)")
+
+
+
+
+pattern_search2(pats, find_pattern = "\\([[:alnum:],]* K, [[:alnum:],]+ M\\)")
+
+pattern_search2(pats, find_pattern = "\\([[:alnum:]]*, K, [[:alnum:]]+, M\\)")
+
+pattern_search2(pats, find_pattern = "([[:alnum:],]* K, [[:alnum:],]+ M)")
+
+
+
+
+match <- "\\([[:alnum:], ]*K, [[:alnum:], ]+M\\)"
+
+possible_event <- "[[:alnum:], ]*"
+event <- "[[:alnum:], ]+"
+
+test_pattern <- "(possible_event, K, event, M)"
+
+eval_pattern <- str_replace(test_pattern, "[(]", "\\(")
+eval_pattern <- str_replace(eval_pattern, "[)]", "\\)")
+eval_pattern <- str_replace(eval_pattern, fixed("possible_event, "), "[[:alnum:], ]*")
+eval_pattern <- str_replace(eval_pattern, fixed("event, "), "[[:alnum:], ]+")
+
+
+
+
+
+pattern_search2(pats, find_pattern = "\\([[:alnum:],]* K, [[:alnum:],]+ M\\)")
+pattern_search3(pats, find_pattern = "(possible_event, K, event, M)", event_set = TRUE)
+
+pattern_search3(pats, find_pattern = "(I, M), (K), (K, M), (L, M)", exact = TRUE)
+
+
+
+pattern_search3 <- function(Clustered_Dataframe, find_pattern = NULL, event_set = FALSE, exact = FALSE) {
+
+
+  if (event_set) {
+
+    find_pattern <- str_replace_all(find_pattern, fixed("("), "\\(")
+    find_pattern <- str_replace_all(find_pattern, fixed(")"), "\\)")
+
+
+    find_pattern <- str_replace_all(find_pattern, fixed("event*, "), "[[:alnum:], ]*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event*"), "[, [:alnum:]]*")
+
+
+    find_pattern <- str_replace_all(find_pattern, fixed("event+, "), "[[:alnum:], ]+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event+"), "[, [:alnum:]]+")
+
+
+    find_pattern <- str_replace_all(find_pattern, fixed("**"), "[[:print:]]*")
+
+    print(find_pattern)
+
+
+  } else {
+
+    find_pattern <- str_replace_all(find_pattern, fixed("event*, "), "[[:alnum:], ]*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event*"), "[, [:alnum:]]*")
+
+
+    find_pattern <- str_replace_all(find_pattern, fixed("event+, "), "[[:alnum:], ]+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event+"), "[, [:alnum:]]+")
+
+
+    find_pattern <- str_replace_all(find_pattern, fixed("**"), "[[:print:]]*")
+
+  }
+
+  if (exact) {
+
+    find_pattern <- fixed(find_pattern)
+
+  }
+
+
+  ## Checking parameters and criteria - checks verified ##
+  if (!"Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    stop("Error: Data structure is not the appropriate class. Needs to be of 'Clustered_Dataframe' class.")
+  }
+
+  if (!"df_sequences" %in% names(Clustered_Dataframe)) {
+    stop("Error: Missing the required 'df_sequences' column.")
+  }
+
+  if (is.null(find_pattern)) {
+    stop("Error: find_pattern parameter is NULL.")
+  }
+
+  if ("Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    # This is code to find the pattern for the clustered dataframe. This is
+    #   class is produced during the clustering step and/or after filter_pattern
+    #   which finds the consensus patterns.
+    df_seq <- Clustered_Dataframe %>%
+      select(cluster, n, df_sequences) %>%
+      unnest(cols = c(df_sequences))
+    df_seq <- df_seq %>% mutate(sequences = map_chr(sequence, sequencer))
+  }
+
+
+  # Now to pull the IDs with the pattern(s)
+  # print(find_pattern)
+  if (length(find_pattern) > 1) {
+    count <- 1
+    for (pattern in find_pattern) {
+      #print(pattern)
+      if (count == 1) {
+        to_pull <- str_detect(df_seq$sequences, pattern)
+        count = count + 1
+      } else {
+        to_pull_n <- str_detect(df_seq$sequences, pattern)
+        count = count + 1
+        to_pull <- replace(to_pull, to_pull_n, TRUE)
+      }
+    }
+  } else {
+    pattern <- find_pattern
+    to_pull <- str_detect(df_seq$sequences, pattern)
+  }
+  df_seq <- subset.data.frame(df_seq, subset = to_pull)
+  df_seq %>% select(cluster, id, sequence, sequences)
+}

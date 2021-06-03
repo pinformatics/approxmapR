@@ -216,3 +216,139 @@ convert_to_events <- function(data, id_column, sequence_column) {
     select(id_column, period, event)
 
 }
+
+
+
+
+
+# -sequencer- is a slightly modified version of -format_sequence- in that it adds
+#   a comma between event sets in a sequence for the id
+#' @export
+sequencer <- function(sequence) {
+
+  sequence <- sequence %>% map_chr(function(itemset) {
+                              itemset <- str_c(itemset, collapse = ", ")
+                              paste0("(", itemset, ")")
+                           }) %>%
+                           str_c(collapse = ", ")
+
+  sequence <- paste0("<", sequence, ">")
+
+  as.character(sequence)
+
+}
+
+
+
+#' @export
+pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set = TRUE, exact = FALSE) {
+
+
+  if (event_set) {
+
+    find_pattern <- str_replace_all(find_pattern, fixed("("), "\\(")
+    find_pattern <- str_replace_all(find_pattern, fixed(")"), "\\)")
+
+
+    # Match an event 0 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("event*, "), "[[:alnum:], ]*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event*"), "[, [:alnum:]]*")
+
+
+    # Match an event 1 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("event+, "), "[[:alnum:], ]+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event+"), "[, [:alnum:]]+")
+
+
+    # Wild card - any alphanumeric ([:alnum:]), punction ([:punct:]), and space characters
+    find_pattern <- str_replace_all(find_pattern, fixed("**"), "[[:print:]]*")
+
+
+    # Match an event set structure 0 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset*, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", eventset*"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]*")
+
+    # Match an event set structure 0 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset+, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", eventset+"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]+")
+
+
+  } else {
+
+    # Match an event 0 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("event*, "), "[[:alnum:], ]*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event*"), "[, [:alnum:]]*")
+
+
+    # Match an event 1 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("event+, "), "[[:alnum:], ]+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event+"), "[, [:alnum:]]+")
+
+
+    # Wild card - any alphanumeric ([:alnum:]), punction ([:punct:]), and space characters
+    find_pattern <- str_replace_all(find_pattern, fixed("**"), "[[:print:]]*")
+
+
+    # Match an event set structure 0 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset*, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", eventset*"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]*")
+
+    # Match an event set structure 0 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset+, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", eventset+"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]+")
+
+  }
+
+  if (exact) {
+
+    find_pattern <- fixed(find_pattern)
+
+  }
+
+
+  ## Checking parameters and criteria - checks verified ##
+  if (!"Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    stop("Error: Data structure is not the appropriate class. Needs to be of 'Clustered_Dataframe' class.")
+  }
+
+  if (!"df_sequences" %in% names(Clustered_Dataframe)) {
+    stop("Error: Missing the required 'df_sequences' column.")
+  }
+
+  if (is.null(find_pattern)) {
+    stop("Error: find_pattern parameter is NULL.")
+  }
+
+  if ("Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    # This is code to find the pattern for the clustered dataframe. This is
+    #   class is produced during the clustering step and/or after filter_pattern
+    #   which finds the consensus patterns.
+    df_seq <- Clustered_Dataframe %>%
+      select(cluster, n, df_sequences) %>%
+      unnest(cols = c(df_sequences))
+    df_seq <- df_seq %>% mutate(sequences = map_chr(sequence, sequencer))
+  }
+
+
+  # Now to pull the IDs with the pattern(s)
+  # print(find_pattern)
+  if (length(find_pattern) > 1) {
+    count <- 1
+    for (pattern in find_pattern) {
+      #print(pattern)
+      if (count == 1) {
+        to_pull <- str_detect(df_seq$sequences, pattern)
+        count = count + 1
+      } else {
+        to_pull_n <- str_detect(df_seq$sequences, pattern)
+        count = count + 1
+        to_pull <- replace(to_pull, to_pull_n, TRUE)
+      }
+    }
+  } else {
+    pattern <- find_pattern
+    to_pull <- str_detect(df_seq$sequences, pattern)
+  }
+  df_seq <- subset.data.frame(df_seq, subset = to_pull)
+  df_seq %>% select(cluster, id, sequence, sequences) %>% arrange(cluster)
+}
