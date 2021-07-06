@@ -70,7 +70,7 @@ to_add[7, 2:3] <- c("7/24/2016", "C")
 to_add <- rbind(to_add, c("900", "2/03/2017", "Z"))
 to_add <- rbind(to_add, c("900", "2/03/2017", "I")) # If multiple events occur on same day then it choose the first one (alphabetically sorted)
 to_add <- rbind(to_add, c("900", "2/04/2017", "Z")) # If multiple same events occur in event set, it keeps the first one (time sorted)
-to_add <- rbind(to_add, c("900", "2/05/2017", "Z")) 
+to_add <- rbind(to_add, c("900", "2/05/2017", "Z"))
 to_add <- rbind(to_add, c("900", "2/05/2017", "J"))
 to_add <- rbind(to_add, c("900", "2/06/2017", "Z"))
 to_add <- rbind(to_add, c("900", "2/07/2017", "Z"))
@@ -173,13 +173,13 @@ pats <- clustered %>% filter_pattern(threshold = 0.3, pattern_name = "consensus"
 # The documentation can be viewed using
 ??pattern_search
 
-# To see the patterns use the following
+# To see the sequences use the following
 agg %>% convert_to_sequence()
 
 
 
 # The default approach allows one to specify the events of interest to occur within
-#   an event set of a sequence. The method will then pull all sequences that 
+#   an event set of a sequence. The method will then pull all sequences that
 #   has those events occurring within the same event set.
 
 # [NOTE] With the default approach the order of the events specified does not matter
@@ -191,6 +191,8 @@ pattern_search(pats, find_pattern = "(D, B)")
 
 # Here we are searching for sequences that have events B4 and C5 occurring within an event set,
 #   and events K1 and L2 occurring with an event set - both must occur
+#
+# Each event set needs to be separated by a comma and a space
 pattern_search(pats, find_pattern = "(C5, B4), (K1, L2)")
 
 
@@ -199,7 +201,7 @@ pattern_search(pats, find_pattern = "(C5, B4), (K1, L2)")
 
 ## Finding patterns with more specificity ##
 
-# The default approach is flexible, if one wants to have more granular control 
+# The default approach is flexible, if one wants to have more granular control
 #   then set event_set = TRUE
 
 # [NOTE] Here the order of the events specified matter and one must indicate if
@@ -211,9 +213,3 @@ pattern_search(pats, find_pattern = "(I, Z), (B)", event_set = TRUE)
 # In order to duplicate the results returned with event_set = TRUE, the correct
 #   pattern specification would be:
 pattern_search(pats, find_pattern = "(I, event*, Z), (B, event*)", event_set = TRUE)
-
-
-
-
-
-
