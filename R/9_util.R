@@ -243,6 +243,36 @@ sequencer <- function(sequence) {
 #' @export
 pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set = FALSE, exact = FALSE) {
 
+  ## Checking parameters and criteria - checks verified ##
+  if (is.null(find_pattern)) {
+    stop("Error: find_pattern parameter is NULL.")
+  }
+
+  if (event_set & exact){
+    stop("Error: The event_set and exact parameters both cannot be TRUE")
+  }
+
+  if ("Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    # This is code to find the pattern for the clustered dataframe. This is
+    #   class is produced during the clustering step and/or after filter_pattern
+    #   which finds the consensus patterns.
+    df_seq <- Clustered_Dataframe %>%
+      select(cluster, n, df_sequences) %>%
+      unnest(cols = c(df_sequences))
+    df_seq <- df_seq %>% mutate(sequences = map_chr(sequence, format_sequence))
+  }
+
+  if ("Aggregated_Dataframe" %in% class(Clustered_Dataframe)) {
+    # This is code to find the pattern for the clustered dataframe. This is
+    #   class is produced during the clustering step and/or after filter_pattern
+    #   which finds the consensus patterns.
+    df_seq <- Clustered_Dataframe %>% convert_to_sequence()
+    names(df_seq) <- c("id", "sequence", "sequences")
+  }
+
+
+
+
   if (event_set) {
 
     find_pattern <- str_replace_all(find_pattern, fixed("("), "\\(")
@@ -264,12 +294,12 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
 
 
     # Match an event set structure 0 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("eventset*, "), "(\\([[:alnum:], ]*[[:alnum:]*]+\\), )*")
-    find_pattern <- str_replace_all(find_pattern, fixed(", eventset*"), "(, \\([[:alnum:], ]*[[:alnum:]*]+\\))*")
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset* "), "(\\([[:alnum:], ]*[[:alnum:]*]+\\) )*")
+    find_pattern <- str_replace_all(find_pattern, fixed(" eventset*"), "( \\([[:alnum:], ]*[[:alnum:]*]+\\))*")
 
     # Match an event set structure 1 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("eventset+, "), "(\\([[:alnum:]*, ]*[[:alnum:]*]+\\), )+")
-    find_pattern <- str_replace_all(find_pattern, fixed(", eventset+"), "(, \\([[:alnum:]*, ]*[[:alnum:]*]+\\))+")
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset+ "), "(\\([[:alnum:]*, ]*[[:alnum:]*]+\\) )+")
+    find_pattern <- str_replace_all(find_pattern, fixed(" eventset+"), "( \\([[:alnum:]*, ]*[[:alnum:]*]+\\))+")
 
 
   } else if (exact) {
@@ -278,16 +308,16 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
 
   } else {
 
-    pieces <- (str_extract_all(find_pattern, "\\(|(([:alnum:]*)[:alnum:](?=,|\\)))|\\)|,"))[[1]]
+    pieces <- (str_extract_all(find_pattern, "\\(|(([:alnum:]*)[:alnum:](?=,|\\)))|\\)| "))[[1]]
 
     pieces_conv <- str_replace_all(pieces, "\\(", "(?:") %>% str_replace_all(., "\\)", ")")
 
-    pieces <- str_subset(pieces, "[^,]")
+    pieces <- str_subset(pieces, "[^ ]")
 
 
     sets <- str_c(pieces_conv, collapse= "")
-    sets <- str_replace_all(sets, "(?<!\\)),", "|")
-    sets <- str_split(sets, ",")[[1]]
+    sets <- str_replace_all(sets, "(?<!\\)) ", "|")
+    sets <- str_split(sets, " ")[[1]]
 
 
 
@@ -306,21 +336,21 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
 
       if (item == "(" & item_index == 1) {
 
-        pattern <- str_c(pattern, "[\\(([:alnum:], )*([:alnum:])+\\), ]*", "\\(")
+        pattern <- str_c(pattern, "[\\(([:alnum:], )*([:alnum:])+\\) ]*", "\\(")
 
       } else if (item == "(" & item_index > 1) {
 
-        pattern <- str_c(pattern, ", \\(")
+        pattern <- str_c(pattern, " \\(")
 
       } else if (item == ")" & item_index != end) {
 
-        pattern <- str_c(pattern, "(, [:alnum:]*)*", "\\)", "[, \\(([:alnum:], )*([:alnum:])+\\)]*")
+        pattern <- str_c(pattern, "(, [:alnum:]*)*", "\\)", "[ \\(([:alnum:], )*([:alnum:])+\\)]*")
 
         sets_counter <- sets_counter + 1
 
       } else if (item == ")" & item_index == end) {
 
-        pattern <- str_c(pattern, "(, [:alnum:]*)*", "\\)", "[, \\(([:alnum:], )*([:alnum:])+\\)]*")
+        pattern <- str_c(pattern, "(, [:alnum:]*)*", "\\)", "[ \\(([:alnum:], )*([:alnum:])+\\)]*")
 
         sets_counter <- sets_counter + 1
 
@@ -346,34 +376,7 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
 
   }
 
-
-
-  ## Checking parameters and criteria - checks verified ##
-  if (!"Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
-    stop("Error: Data structure is not the appropriate class. Needs to be of 'Clustered_Dataframe' class.")
-  }
-
-  if (!"df_sequences" %in% names(Clustered_Dataframe)) {
-    stop("Error: Missing the required 'df_sequences' column.")
-  }
-
-  if (is.null(find_pattern)) {
-    stop("Error: find_pattern parameter is NULL.")
-  }
-
-  if (event_set & exact){
-    stop("Error: The event_set and exact parameters both cannot be TRUE")
-  }
-
-  if ("Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
-    # This is code to find the pattern for the clustered dataframe. This is
-    #   class is produced during the clustering step and/or after filter_pattern
-    #   which finds the consensus patterns.
-    df_seq <- Clustered_Dataframe %>%
-      select(cluster, n, df_sequences) %>%
-      unnest(cols = c(df_sequences))
-    df_seq <- df_seq %>% mutate(sequences = map_chr(sequence, sequencer))
-  }
+  #print(find_pattern)
 
 
   # Now to pull the IDs with the pattern(s)
@@ -397,6 +400,15 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
   }
 
   df_seq <- subset.data.frame(df_seq, subset = to_pull)
-  df_seq %>% select(cluster, id, sequence, sequences) %>% arrange(cluster)
+
+  if ("Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
+    df_seq <- df_seq %>% select(cluster, id, sequence, sequences) %>% arrange(cluster)
+  }
+
+  if ("Aggregated_Dataframe" %in% class(Clustered_Dataframe)) {
+    df_seq <- df_seq %>% select(id, sequence, sequences) %>% arrange(id)
+  }
+
+  return(df_seq)
 
 }

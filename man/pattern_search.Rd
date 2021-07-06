@@ -32,11 +32,11 @@ have been created for ease of use.
 
 \item{**}{will translate into "[[:print:]]*" and will match any printable characters which are: [:alnum:], [:punct:] and space.}
 
-\item{eventset*, }{will translate into "(\\([[:alnum:], ]*[[:alnum:]*]+\\), )*" and will match an event set structure zero or more times. Specifies that any number of event sets}
-\item{eventset+, }{will translate into "(\\([[:alnum:]*, ]*[[:alnum:]*]+\\), )+" and will match an event set structure one or more times.}
+\item{eventset* }{will translate into "(\\([[:alnum:], ]*[[:alnum:]*]+\\) )*" and will match an event set structure zero or more times. Specifies that any number of event sets}
+\item{eventset+ }{will translate into "(\\([[:alnum:]*, ]*[[:alnum:]*]+\\) )+" and will match an event set structure one or more times.}
 
-\item{, eventset*}{will translate into "(, \\([[:alnum:], ]*[[:alnum:]*]+\\))*" and will match an event set structure zero or more times.}
-\item{, eventset+}{will translate into "(, \\([[:alnum:]*, ]*[[:alnum:]*]+\\))+" and will match an event set structure one or more times.}
+\item{ eventset*}{will translate into "( \\([[:alnum:], ]*[[:alnum:]*]+\\))*" and will match an event set structure zero or more times.}
+\item{ eventset+}{will translate into "( \\([[:alnum:]*, ]*[[:alnum:]*]+\\))+" and will match an event set structure one or more times.}
 }
 \examples{
 data("demo1")

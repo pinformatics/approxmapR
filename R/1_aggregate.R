@@ -268,12 +268,12 @@ convert_to_sequence <- function(df_seq) {
     # this method has 2
     # mutate calls to do that all while ensuring the classes are appropriately maintained
     df_seq <-
-        df_seq %>% group_by(id) %>% nest(.key = "nested_id") %>% mutate(
+        df_seq %>% group_by(id) %>% nest() %>% mutate(
             sequence = map(nested_id,
                            function(df_id) {
                                seqs <-
                                    df_id %>% group_by(period) %>%
-                                   nest(.key = "list_data") %>%
+                                   nest() %>%
                                    mutate(seqs = map(list_data,
                                                      function(itemset) {
                                                          events <- itemset$event
