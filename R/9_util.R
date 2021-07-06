@@ -241,8 +241,7 @@ sequencer <- function(sequence) {
 
 
 #' @export
-pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set = TRUE, exact = FALSE) {
-
+pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set = FALSE, exact = FALSE) {
 
   if (event_set) {
 
@@ -251,13 +250,13 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
 
 
     # Match an event 0 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("event*, "), "[[:alnum:], ]*")
-    find_pattern <- str_replace_all(find_pattern, fixed(", event*"), "[, [:alnum:]]*")
+    find_pattern <- str_replace_all(find_pattern, fixed("event*, "), "([:alnum:]*, )*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event*"), "(, [:alnum:]*)*")
 
 
     # Match an event 1 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("event+, "), "[[:alnum:], ]+")
-    find_pattern <- str_replace_all(find_pattern, fixed(", event+"), "[, [:alnum:]]+")
+    find_pattern <- str_replace_all(find_pattern, fixed("event+, "), "([:alnum:]*, )+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", event+"), "(, [:alnum:]*)+")
 
 
     # Wild card - any alphanumeric ([:alnum:]), punction ([:punct:]), and space characters
@@ -265,45 +264,88 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
 
 
     # Match an event set structure 0 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("eventset*, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*")
-    find_pattern <- str_replace_all(find_pattern, fixed(", eventset*"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]*")
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset*, "), "(\\([[:alnum:], ]*[[:alnum:]*]+\\), )*")
+    find_pattern <- str_replace_all(find_pattern, fixed(", eventset*"), "(, \\([[:alnum:], ]*[[:alnum:]*]+\\))*")
 
-    # Match an event set structure 0 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("eventset+, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]+")
-    find_pattern <- str_replace_all(find_pattern, fixed(", eventset+"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]+")
-
-
-  } else {
-
-    # Match an event 0 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("event*, "), "[[:alnum:], ]*")
-    find_pattern <- str_replace_all(find_pattern, fixed(", event*"), "[, [:alnum:]]*")
+    # Match an event set structure 1 or more times
+    find_pattern <- str_replace_all(find_pattern, fixed("eventset+, "), "(\\([[:alnum:]*, ]*[[:alnum:]*]+\\), )+")
+    find_pattern <- str_replace_all(find_pattern, fixed(", eventset+"), "(, \\([[:alnum:]*, ]*[[:alnum:]*]+\\))+")
 
 
-    # Match an event 1 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("event+, "), "[[:alnum:], ]+")
-    find_pattern <- str_replace_all(find_pattern, fixed(", event+"), "[, [:alnum:]]+")
-
-
-    # Wild card - any alphanumeric ([:alnum:]), punction ([:punct:]), and space characters
-    find_pattern <- str_replace_all(find_pattern, fixed("**"), "[[:print:]]*")
-
-
-    # Match an event set structure 0 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("eventset*, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]*")
-    find_pattern <- str_replace_all(find_pattern, fixed(", eventset*"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]*")
-
-    # Match an event set structure 0 or more times
-    find_pattern <- str_replace_all(find_pattern, fixed("eventset+, "), "[\\([[:alnum:], ]*[[:alnum:]]+\\), ]+")
-    find_pattern <- str_replace_all(find_pattern, fixed(", eventset+"), "[, \\([[:alnum:], ]*[[:alnum:]]+\\)]+")
-
-  }
-
-  if (exact) {
+  } else if (exact) {
 
     find_pattern <- fixed(find_pattern)
 
+  } else {
+
+    pieces <- (str_extract_all(find_pattern, "\\(|(([:alnum:]*)[:alnum:](?=,|\\)))|\\)|,"))[[1]]
+
+    pieces_conv <- str_replace_all(pieces, "\\(", "(?:") %>% str_replace_all(., "\\)", ")")
+
+    pieces <- str_subset(pieces, "[^,]")
+
+
+    sets <- str_c(pieces_conv, collapse= "")
+    sets <- str_replace_all(sets, "(?<!\\)),", "|")
+    sets <- str_split(sets, ",")[[1]]
+
+
+
+
+
+
+    # Building pattern structure
+    pattern <- ""
+    previous_item <- ""
+    item_index <- 1
+    end <- length(pieces)
+
+    sets_counter <- 1
+
+    for (item in pieces) {
+
+      if (item == "(" & item_index == 1) {
+
+        pattern <- str_c(pattern, "[\\(([:alnum:], )*([:alnum:])+\\), ]*", "\\(")
+
+      } else if (item == "(" & item_index > 1) {
+
+        pattern <- str_c(pattern, ", \\(")
+
+      } else if (item == ")" & item_index != end) {
+
+        pattern <- str_c(pattern, "(, [:alnum:]*)*", "\\)", "[, \\(([:alnum:], )*([:alnum:])+\\)]*")
+
+        sets_counter <- sets_counter + 1
+
+      } else if (item == ")" & item_index == end) {
+
+        pattern <- str_c(pattern, "(, [:alnum:]*)*", "\\)", "[, \\(([:alnum:], )*([:alnum:])+\\)]*")
+
+        sets_counter <- sets_counter + 1
+
+      } else {
+
+        if (pieces[item_index + 1] == ")") {
+
+          pattern <- str_c(pattern,  "([:alnum:]*, )*", sets[sets_counter])
+
+        } else {
+
+          pattern <- str_c(pattern,  "([:alnum:]*, )*", sets[sets_counter], ", ")
+
+        }
+
+      }
+
+      item_index <- item_index + 1
+
+    }
+
+    find_pattern <- pattern
+
   }
+
 
 
   ## Checking parameters and criteria - checks verified ##
@@ -317,6 +359,10 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
 
   if (is.null(find_pattern)) {
     stop("Error: find_pattern parameter is NULL.")
+  }
+
+  if (event_set & exact){
+    stop("Error: The event_set and exact parameters both cannot be TRUE")
   }
 
   if ("Clustered_Dataframe" %in% class(Clustered_Dataframe)) {
@@ -349,6 +395,8 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
     pattern <- find_pattern
     to_pull <- str_detect(df_seq$sequences, pattern)
   }
+
   df_seq <- subset.data.frame(df_seq, subset = to_pull)
   df_seq %>% select(cluster, id, sequence, sequences) %>% arrange(cluster)
+
 }
