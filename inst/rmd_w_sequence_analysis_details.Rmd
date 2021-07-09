@@ -9,6 +9,7 @@ params:
   k_value: NA
   time_period: NA
   consensus_threshold: NA
+  cluster_n: NA
   notes: NA
 ---
 
@@ -20,6 +21,7 @@ The current sequential analysis was conducted using the ApproxMAP algorithm with
 
 * Clustering algorithm: `r params$algorithm`
 * K value: `r params$k_value`
+* Number of clusters: `r params$cluster_n`
 * Grouping time period: `r params$time_period`
 * Consensus pattern threshold: `r params$consensus_threshold`
 * Any special notes: `r params$notes`

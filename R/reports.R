@@ -52,19 +52,22 @@ generate_reports <- function(w_sequence_dataframe,
     }
 
     if (!"algorithm" %in% names(sequence_analysis_details))  {
-      stop("Error: Missing the algorithm parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
+      stop("Error: Missing the algorithm parameter in sequence_analysis_details. Must have algorithm, k_value, cluster_n, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
     }
     if (!"k_value" %in% names(sequence_analysis_details)) {
-      stop("Error: Missing the k_value parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
+      stop("Error: Missing the k_value parameter in sequence_analysis_details. Must have algorithm, k_value, cluster_n, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
+    }
+    if (!"cluster_n" %in% names(sequence_analysis_details)) {
+      stop("Error: Missing the cluster_n parameter in sequence_analysis_details. Must have algorithm, k_value, cluster_n, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
     }
     if (!"time_period" %in% names(sequence_analysis_details)) {
-      stop("Error: Missing the time_period parameter in sequence_analysis_details.Must have algorithm, k_value, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
+      stop("Error: Missing the time_period parameter in sequence_analysis_details.Must have algorithm, k_value, cluster_n, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
     }
     if (!"consensus_threshold" %in% names(sequence_analysis_details)) {
-      stop("Error: Missing the consensus_threshold parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
+      stop("Error: Missing the consensus_threshold parameter in sequence_analysis_details. Must have algorithm, k_value, cluster_n, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
     }
     if (!"notes" %in% names(sequence_analysis_details)) {
-      stop("Error: Missing the notes parameter in sequence_analysis_details. Must have algorithm, k_value, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
+      stop("Error: Missing the notes parameter in sequence_analysis_details. Must have algorithm, k_value, cluster_n, time_period, consensus_threshold, and notes parameters. See ??generate_reports() for help.")
     }
   }
 
