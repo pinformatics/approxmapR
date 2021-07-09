@@ -191,7 +191,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
 #' @export
-cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FALSE, k.max = 10) {
+cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
   #df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
 
@@ -246,33 +246,14 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE, estimate_k = FA
 
 
 
-  #######
-
-  #######
-  # Estimating the optimal number of clusters
-  if (estimate_k) {
-
-    message("Estimating Optimal K using the silhouette approach \n")
-    res <- fviz_nbclust(distance_matrix, cluster::pam, method = "silhouette", diss = distance_matrix, k.max = k.max)
-    best_k <- which.max(res$data$y)
-
-    message("Optimal K = ", best_k, "\n")
-    print(res)
-
-    message("Clustering Based on PAM Algorithm \n")
-    res <- pam(distance_matrix, k = best_k, diss = TRUE)
-
-  } else {
-
-    message("Clustering Based on PAM Algorithm \n")
-    res <- pam(distance_matrix, k = k, diss = TRUE)
-
-  }
-
+  #######################
+  # Clustering the data #
+  #######################
+  message("Clustering Based on PAM Algorithm \n")
+  res <- pam(distance_matrix, k = k, diss = TRUE)
 
 
   df_cluster$cluster_id <- res$cluster
-
 
 
   df_cluster <- df_cluster %>%
@@ -365,7 +346,6 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
   if (max_k == dim(distance_matrix)[1]) {
 
     message("\n \n Specified max_k value is too large for the size of the data, i.e. greater than the number of observations - 1 ... \n")
-    message("Setting max_k to maximum allowable value and proceeding ... \n \n")
     message(cat("Set max_k to ", max_k - 1, " and run again ... \n \n"))
 
     stop()
@@ -392,7 +372,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
     average_silhouette_width_lower_ci <- numeric(n)
     average_silhouette_width <- numeric(n)
     average_silhouette_width_upper_ci <- numeric(n)
-
+    
 
     for (i in min_k:n) {
 
@@ -570,17 +550,11 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
     output_directory <- create_folder(output_directory, "approxmap_results")
     output_directory_graphs <- create_folder(output_directory, "graphs")
 
-    sink(paste0(output_directory_graphs,
-                "/",
-                file_check(output_directory_graphs,
-                           graph_file_name)),
-         split = TRUE)
-
-    png(file = paste0(output_directory_graphs, "/", graph_file_name), width = size_width, height = size_height)
+    png(file = paste0(output_directory_graphs, "/", file_check(output_directory_graphs,
+               graph_file_name)), width = size_width, height = size_height)
     print(k_plot)
     dev.off()
 
-    sink()
 
   }
 
