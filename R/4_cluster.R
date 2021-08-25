@@ -286,19 +286,22 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
 #' @export
 find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10, validation_measure = 'silhouette',
-                           use_cache = TRUE,
-                           save_graph = TRUE, graph_file_name = "Optimal K Graph.png", size_width = 855, size_height = 317, output_directory = "~") {
+                            use_cache = TRUE, save_table = FALSE, file_name = NULL , output_directory = "~") {
+
 
   # Testing valid parameter entries
   if (!clustering %in% list("k-nn", "k-medoids")) {
     stop("Error: Not a valid clustering algorithm. Must be 'k-nn' or 'k-medoids'.")
   }
 
-  if (save_graph) {
-    if (!endsWith(graph_file_name, ".png")) {
-      stop("Error: The graph file name must end with '.png'. Only PNG images are supported at this time.")
+  if (save_table) {
+
+    if (!is.null(file_name) && !endsWith(file_name, ".csv")) {
+      stop("Error: The table file name must end with '.csv'. Only CSV files are supported at this time.")
     }
-  }
+
+    }
+
 
   # Using cached information if present, otherwise calculating it and storing
   #   it as an environment variable
@@ -372,7 +375,8 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
     average_silhouette_width_lower_ci <- numeric(n)
     average_silhouette_width <- numeric(n)
     average_silhouette_width_upper_ci <- numeric(n)
-    
+    silhouette_object <- list()
+
 
     for (i in min_k:n) {
 
@@ -413,9 +417,11 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
         average_silhouette_width[i] <- NA
         average_silhouette_width_upper_ci[i] <- NA
 
+        silhouette_object <- NA
+
       } else {
 
-        clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster)
+        clust_stats <- cluster.stats(d = distance_matrix, clustering = cluster_id$cluster, silhouette = FALSE)
 
         k[i] <- i
         n_clusters[i] <- clust_stats$cluster.number
@@ -437,14 +443,19 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
         average_silhouette_width[i] <- x_bar
         average_silhouette_width_upper_ci[i] <- x_bar + error
 
+        # Currently this works perfectly as expected - if results start to seem
+        #   weird, check here since it's concatenating on index
+        silhouette_object[[i]] <- cbind(cluster_id, sil[ , 2:3])
+        #class(silhouette_object[[i]]) <- "silhouette"
       }
 
     }
 
-    slice(data.frame(k, n_clusters, cluster_size,
+    slice(tibble(k, n_clusters, cluster_size,
                      average_silhouette_width_lower_ci,
                      average_silhouette_width,
                      average_silhouette_width_upper_ci,
+                     silhouette_object,
                      dunn,
                      average_within, average_between, wb_ratio,
                      within_cluster_ss), 2:n())
@@ -452,114 +463,49 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
 
   }
 
+  # Creating Final Data Object and Writing Results if Desired
   k_info <- calc(max_k)
 
 
+  if (clustering == "k-nn") {
 
+    algo = "K-Nearest Neighbors"
 
+  } else if (clustering == "k-medoids") {
 
-  # Plotting Information
-  if (validation_measure == 'silhouette') {
-
-      measure = 'Average Silhouette Width'
-      measure_values = k_info$average_silhouette_width
-
-  } else if (validation_measure == 'dunn') {
-
-      measure = 'Dunn Index'
-      measure_values = k_info$dunn
-
-  } else if (validation_measure == 'wb_ratio') {
-
-      measure = 'Average Distance Within Cluster / Average Distance Between Clusters'
-      measure_values = k_info$wb_ratio
-
-  } else if (validation_measure == 'average_between') {
-
-      measure = 'Average Distance Between Clusters'
-      measure_values = k_info$average_between
-
-  } else if (validation_measure == 'average_within') {
-
-      measure = 'Average Distance Within Cluster'
-      measure_values = k_info$average_within
-
-  } else if (validation_measure == 'within_cluster_ss') {
-
-      measure = 'Sum of Within Cluster / Cluster Size'
-      measure_values = k_info$within_cluster_ss
-
-  } else {
-
-    stop("Only validation measures of silhouette, dunn, wb_ratio, average_between, average_within, and within_cluster_ss are supported.")
+    algo = "K-Medoids"
 
   }
 
 
-  if (validation_measure == 'silhouette') {
-
-   k_plot <- ggplot(k_info, aes(k, average_silhouette_width)) +
-
-      geom_line(color = "#20B2AA") +
-
-      geom_errorbar(aes(ymax = average_silhouette_width_upper_ci,
-                        ymin = average_silhouette_width_lower_ci),
-                    width = .25,
-                    color = "#20B2AA") +
-
-      geom_vline(xintercept = k_info$k[which.max(k_info$average_silhouette_width)],
-                 color = "#20B2AA", linetype = 'dashed') +
-
-      labs(title = "Optimal K Plot",
-           subtitle = paste0("k =", k_info$k[which.max(k_info$average_silhouette_width)], "; Max average silhouette width = ", round(k_info$average_silhouette_width[which.max(k_info$average_silhouette_width)], digits = 3)),
-           x = "K Value",
-           y = measure)  +
-
-
-     coord_cartesian(xlim = c(min(k_info$k), max(k_info$k))) +
-
-     scale_x_continuous(labels = as.character(k_info$k), breaks = k_info$k)
+  attributes(k_info) <- c(list("algorithm" = algo), attributes(k_info))
+  class(k_info) <- c("ktable", class(k_info))
 
 
 
-  } else {
-
-
-    k_plot <- ggplot(k_info, aes(k, measure_values)) +
-
-      geom_line(color = "#20B2AA") +
-
-      labs(title = "Optimal K Plot",
-           x = "K Value",
-           y = measure) +
-
-      coord_cartesian(xlim = c(min(k_info$k), max(k_info$k))) +
-
-      scale_x_continuous(labels = as.character(k_info$k), breaks = k_info$k)
-
-
-
-  }
-
-
-
-
-
-  # This portion saves the graph if the option is selected
-  if (save_graph) {
+  if (save_table) {
     output_directory <- create_folder(output_directory, "approxmap_results")
-    output_directory_graphs <- create_folder(output_directory, "graphs")
+    output_directory_table <- create_folder(output_directory, "private")
 
-    png(file = paste0(output_directory_graphs, "/", file_check(output_directory_graphs,
-               graph_file_name)), width = size_width, height = size_height)
-    print(k_plot)
-    dev.off()
+    message("
 
+            Cannot write 'silhouette_object' due to data type; writing all information except this column.
+
+            ")
+
+
+    if (is.null(file_name)) {
+
+      file_name = paste0(attr(k_info, "algorithm"), " Ktable", "_min K ", min_k,"_max K ", max_k,".csv")
+
+    }
+
+    write.csv(k_info %>% select(!silhouette_object),
+              file = paste0(output_directory_table, "/", file_check(output_directory_table, file_name)),
+              row.names = FALSE)
 
   }
 
-
-  print(k_plot)
   return(k_info)
 
 }

@@ -78,9 +78,13 @@ truncate_pattern.W_Sequence_Pattern <- function(w_sequence) {
             (break)()
         e_1 <- sort(w_sequence[[i]]$elements)
         e_2 <- sort(w_sequence[[i + 1]]$elements)
-        if (identical(e_1, e_2)) {
-            truncate_index[i] <- TRUE
-        }
+
+        # Commented out on 08/06/2021 - seems to fix the removal of duplicated event sets
+        #   witin the _truncated view. Good thing, we want all to be shown.
+
+        #if (identical(e_1, e_2)) {
+        #    truncate_index[i] <- TRUE
+        #}
     }
     w_sequence[truncate_index] <- NULL
 
@@ -109,7 +113,7 @@ format_sequence.W_Sequence_Pattern_Compressed <-
         if (html_format) {
             if(n > 1){
                 colors <-
-                    rev(colormap::colormap(colormap = "viridis", nshades = n) %>%
+                    rev(colormap::colormap(colormap = "bluered", nshades = n) %>%
                             stringr::str_sub(1, -3))
             } else {
                 colors <- colormap::colormap(nshades = 2)[1]
@@ -410,5 +414,293 @@ pattern_search <- function(Clustered_Dataframe, find_pattern = NULL, event_set =
   }
 
   return(df_seq)
+
+}
+
+
+
+
+
+plot_ktable <- function(ktable,
+                        validation_measure = 'silhouette',
+                        save_graph = TRUE,
+                        graph_file_name = NULL,
+                        size_width = 855, size_height = 317,
+                        output_directory = "~") {
+
+
+  # Parameter Checks
+  stopifnot("ktable" %in% class(ktable))
+
+
+  if (save_graph) {
+
+    if (is.null(graph_file_name)) {
+
+      graph_file_name = paste0(attr(ktable, "algorithm"), " Optimal K Plot_", validation_measure, ".png")
+
+    }
+
+    if (!endsWith(graph_file_name, ".png")) {
+      stop("Error: The graph file name must end with '.png'. Only PNG images are supported at this time.")
+    }
+
+
+  }
+
+
+
+  # Plotting Information
+  if (validation_measure == 'silhouette') {
+
+    measure = 'Average Silhouette Width'
+    measure_values =ktable$average_silhouette_width
+
+  } else if (validation_measure == 'dunn') {
+
+    measure = 'Dunn Index'
+    measure_values = ktable$dunn
+
+  } else if (validation_measure == 'wb_ratio') {
+
+    measure = 'Average Distance Within Cluster / Average Distance Between Clusters'
+    measure_values = ktable$wb_ratio
+
+  } else if (validation_measure == 'average_between') {
+
+    measure = 'Average Distance Between Clusters'
+    measure_values = ktable$average_between
+
+  } else if (validation_measure == 'average_within') {
+
+    measure = 'Average Distance Within Cluster'
+    measure_values = ktable$average_within
+
+  } else if (validation_measure == 'within_cluster_ss') {
+
+    measure = 'Sum of Within Cluster / Cluster Size'
+    measure_values = ktable$within_cluster_ss
+
+  } else {
+
+    stop("Only validation measures of silhouette, dunn, wb_ratio, average_between, average_within, and within_cluster_ss are supported.")
+
+  }
+
+
+
+  if (validation_measure == 'silhouette') {
+
+    k_plot <- ggplot(ktable, aes(k, average_silhouette_width)) +
+
+      geom_line(color = "#20B2AA") +
+
+      geom_errorbar(aes(ymax = average_silhouette_width_upper_ci,
+                        ymin = average_silhouette_width_lower_ci),
+                    width = .25,
+                    color = "#20B2AA") +
+
+      geom_vline(xintercept = ktable$k[which.max(ktable$average_silhouette_width)],
+                 color = "#20B2AA", linetype = 'dashed') +
+
+      labs(title = paste0(attr(ktable, "algorithm"), " Optimal K Plot"),
+           subtitle = paste0("k =", ktable$k[which.max(ktable$average_silhouette_width)], "; Max average silhouette width = ", round(ktable$average_silhouette_width[which.max(ktable$average_silhouette_width)], digits = 3)),
+           x = "K Value",
+           y = measure)  +
+
+
+      coord_cartesian(xlim = c(min(ktable$k), max(ktable$k))) +
+
+      scale_x_continuous(labels = as.character(ktable$k), breaks = ktable$k)
+
+
+
+  } else if (validation_measure == 'dunn'){
+
+    k_plot <- ggplot(ktable, aes(k, dunn)) +
+
+      geom_line(color = "#20B2AA") +
+
+      geom_vline(xintercept = ktable$k[which.max(ktable$dunn)],
+                 color = "#20B2AA", linetype = 'dashed') +
+
+      labs(title = paste0(attr(ktable, "algorithm"), " Optimal K Plot"),
+           subtitle = paste0("k =", ktable$k[which.max(ktable$dunn)], "; Max Dunn Index = ", round(ktable$dunn[which.max(ktable$dunn)], digits = 3)),
+           x = "K Value",
+           y = measure)  +
+
+
+      coord_cartesian(xlim = c(min(ktable$k), max(ktable$k))) +
+
+      scale_x_continuous(labels = as.character(ktable$k), breaks = ktable$k)
+
+
+
+  } else {
+
+
+    k_plot <- ggplot(ktable, aes(k, measure_values)) +
+
+      geom_line(color = "#20B2AA") +
+
+      labs(title = paste0(attr(ktable, "algorithm"), " Optimal K Plot"),
+           x = "K Value",
+           y = measure) +
+
+      coord_cartesian(xlim = c(min(ktable$k), max(ktable$k))) +
+
+      scale_x_continuous(labels = as.character(ktable$k), breaks = ktable$k)
+
+
+  }
+
+
+
+
+
+  # This portion saves the graph if the option is selected
+  if (save_graph) {
+    output_directory <- create_folder(output_directory, "approxmap_results")
+    output_directory_graphs <- create_folder(output_directory, "graphs")
+
+    png(file = paste0(output_directory_graphs, "/", file_check(output_directory_graphs,
+                                                               graph_file_name)), width = size_width, height = size_height)
+    print(k_plot)
+    dev.off()
+
+
+  }
+
+  print(k_plot)
+
+
+}
+
+
+
+
+
+## plot_silhouette
+plot_silhouette <- function(ktable,
+                            save_graph = TRUE,
+                            graph_file_name_individual = NULL,
+                            graph_file_name_cluster = NULL,
+                            size_width = 855, size_height = 317,
+                            save_table = TRUE,
+                            table_file_name = NULL,
+                            output_directory = "~") {
+
+
+  # Calculating average silhouette width per cluster and merging into org. data
+  ktable$cluster <- as.factor(ktable$cluster)
+
+  clustertable <- ktable %>% group_by(cluster) %>% summarize(cluster_sil_width = mean(sil_width))
+
+  ktable <- merge(ktable, clustertable, on = c("cluster")) %>% select(id, cluster, neighbor, sil_width, cluster_sil_width)
+
+
+
+  # Creating plot at the individual level
+  id_plot <- ggplot(ktable, aes(x = sil_width, y = reorder(id, cluster, sort),
+                                group = cluster, label = round(sil_width, digits = 2))) +
+
+    geom_col(aes(fill = cluster), color = "white", position = "dodge") +
+    geom_text(hjust = -0.2) +
+
+    scale_fill_hue(l = 40) +
+
+    labs(title = "Individual Silhoutte Plot",
+         subtitle = paste0("n = ", length(ktable$id), "; Average silhouette width = ", round(mean(ktable$sil_width), digits = 3)),
+         x = "Silhoutte Width S_i",
+         y = "ID") +
+
+    coord_cartesian(xlim = c(min(ktable$sil_width), 1)) +
+    guides(fill = guide_legend(title = "Cluster"))
+
+
+
+  # Creating plot at the cluster level
+  cluster_plot <- ggplot(clustertable, aes(x = cluster_sil_width, y = reorder(cluster, cluster, sort),
+                                           label = round(cluster_sil_width, digits = 2))) +
+
+    geom_col(aes(fill = cluster), color = "white", position = "dodge") +
+    geom_text(hjust = -0.2) +
+
+    scale_fill_hue(l = 40) +
+
+    labs(title = "Cluster Silhoutte Plot",
+         subtitle = paste0("n = ", length(ktable$id), "; Average silhouette width = ", round(mean(ktable$sil_width), digits = 3)),
+         x = "Average Silhoutte Width per Cluster",
+         y = "Cluster") +
+
+    coord_cartesian(xlim = c(min(ktable$sil_width), 1)) +
+    guides(fill = guide_legend(title = "Cluster"))
+
+
+
+
+
+  # Writing the table and graphs if desired
+  if (save_graph) {
+    output_directory <- create_folder(output_directory, "approxmap_results")
+    output_directory_graphs <- create_folder(output_directory, "graphs")
+
+    # Checking the individual graph information
+    if (is.null(graph_file_name_individual)) {
+
+      graph_file_name_individual = paste0("Individual Silhouette Plot.png")
+
+    }
+
+    if (!endsWith(graph_file_name_individual, ".png")) {
+      stop("Error: The graph file name at the individual level must end with '.png'. Only PNG images are supported at this time.")
+    }
+
+
+    # Checking the cluster graph information
+    if (is.null(graph_file_name_cluster)) {
+
+      graph_file_name_cluster = paste0("Cluster Silhouette Plot.png")
+
+    }
+
+    if (!endsWith(graph_file_name_cluster, ".png")) {
+      stop("Error: The graph file name at the cluster level must end with '.png'. Only PNG images are supported at this time.")
+    }
+
+
+    # Writing the graphs
+    png(file = paste0(output_directory_graphs, "/", file_check(output_directory_graphs,
+                                                               graph_file_name_individual)), width = size_width, height = size_height)
+    print(id_plot)
+    dev.off()
+
+
+    png(file = paste0(output_directory_graphs, "/", file_check(output_directory_graphs,
+                                                               graph_file_name_cluster)), width = size_width, height = size_height)
+    print(cluster_plot)
+    dev.off()
+  }
+
+
+  if (save_table) {
+    #output_directory <- create_folder(output_directory, "approxmap_results")
+    output_directory_table <- create_folder(output_directory, "private")
+
+
+    if (is.null(table_file_name)) {
+
+      table_file_name = "Silhouette Clustering Information.csv"
+
+    }
+
+    write.csv(ktable,
+              file = paste0(output_directory_table, "/", file_check(output_directory_table, table_file_name)),
+              row.names = FALSE)
+
+  }
+
+  list(print(id_plot), print(cluster_plot))
+
 
 }
