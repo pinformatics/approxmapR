@@ -2,9 +2,8 @@
 \alias{find_optimal_k}
 \title{Clustering Functions}
 \usage{
-  find_optimal_k(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10,
-  validation_measure = 'silhouette', use_cache = TRUE,
-  save_graph = TRUE, graph_file_name = "Optimal K Graph.png", size_width = 855, size_height = 317, output_directory = "~")
+  find_optimal_k(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10, validation_measure = 'silhouette',
+                              use_cache = TRUE, save_table = TRUE, file_name = NULL , output_directory = "~")
 }
 \arguments{
 \item{df_aggregated}{A dataframe that has been aggregated using either aggregate_sequences(), or pre_aggregated()
@@ -34,15 +33,9 @@ cuurently supported:
 
 \item{use_cache}{A boolean value to indicate weather or not to use the cached distance matrix.}
 
-\item{save_graph}{Default value is TRUE which will save the graph as a PNG file.}
+\item{save_table}{Default value is TRUE which will save the table as a CSV file.}
 
-\item{graph_file_name}{Allows user to specify the file name for the graph that is being saved.}
-
-\item{graph_file_name}{Allows user to specify the file name for the graph that is being saved.}
-
-\item{size_width}{The width of the graph.}
-
-\item{size_height}{The height of the graph.}
+\item{file_name}{Allows user to specify the file name for the table that is being saved, if nothing is specified then a default file name is used.}
 
 \item{output_directory}{The path to where the exports should be placed. This creates a folder with the name of "approxmap_results".}
 
@@ -67,7 +60,7 @@ validation measure and K values.
     aggregate_sequences(format = "\%Y-\%m-\%d",
                         unit = "month",
                         n_units = 1,
-                        summary_stats=FALSE) \%>\%
+                        summary_stats = FALSE) \%>\%
     find_optimal_k(clustering = 'k-nn', min_k = 2, max_k = 10,
-                   validation_measure = 'silhouette', use_cache = FALSE)
+                   validation_measure = 'silhouette', use_cache = TRUE)
 }
