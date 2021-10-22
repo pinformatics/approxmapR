@@ -1,0 +1,93 @@
+---
+output:
+  html_document:
+    css: priority.css
+params:
+  input: NA
+  title: NA
+  algorithm: NA
+  k_value: NA
+  time_period: NA
+  consensus_threshold: NA
+  cluster_n: NA
+  notes: NA
+  event_definitions: NA
+---
+
+---
+title: `r params$title`
+---
+
+The current sequential analysis was conducted using the ApproxMAP algorithm with the following parameters:
+
+* Clustering algorithm: `r params$algorithm`
+* K value: `r params$k_value`
+* Number of clusters: `r params$cluster_n`
+* Grouping time period: `r params$time_period`
+* Consensus pattern threshold: `r params$consensus_threshold`
+* Any special notes: `r params$notes`
+
+
+
+
+
+
+```{r, echo=FALSE, out.width='100%'}
+library(knitr)
+library(kableExtra)
+
+
+
+
+kable(params$event_definitions, "html", escape = F, align = c("c","c")) %>%
+  kable_styling(bootstrap_options = "responsive")
+
+
+perc <- c(1, (1:10)*10)
+wseq <-
+  perc %>%
+  map(function(x){
+    a <- list()
+    a$elements <- paste0(x,"%")
+    a$element_weights <- x
+    a$itemset_weights <- x
+    class_it(a, "W_Sequence_Itemset")
+  }) %>%
+  class_it("percentage_bar")
+attr(wseq, "n") <- 100
+
+
+wseq %>% view_formatted_sequence()
+
+df <- params$input
+
+rn <-
+  df %>%
+    mutate(rn = row_number()) %>%
+    filter(cluster%%2 == 0) %>%
+    pull(rn)
+
+if(nrow(df) > 0){
+  if(ncol(df) == 5){
+    kable(df, "html", escape = F, align = c("c","c","c","c","l")) %>%
+    kable_styling(bootstrap_options = "responsive") %>%
+    row_spec(rn, background = "#f2f2f2") %>%
+    column_spec(1, width = "3%") %>%
+    column_spec(2, width = "3%") %>%
+    column_spec(3, width = "4%") %>%
+    column_spec(4, width = "10%") %>%
+    column_spec(5, width = "80%")
+  } else {
+    kable(df, "html", escape = F, align = c("c","c","c","l")) %>%
+    kable_styling(position = "left") %>%
+    row_spec(rn, background = "#f2f2f2") %>%
+    column_spec(1, width = "3%") %>%
+    column_spec(2, width = "3%") %>%
+    column_spec(3, width = "4%") %>%
+    column_spec(4, width = "90%")
+  }
+} else {
+  cat("Empty Dataframe")
+}
+
+```
