@@ -38,13 +38,24 @@ file_check <- function(dir = ".", file_name) {
 
 #' @export
 generate_reports <- function(w_sequence_dataframe,
+                             sil_table = NULL,
                              html_format = TRUE,
                              # truncate_patterns = FALSE,
                              output_directory = "~",
                              end_filename_with = "",
                              sequence_analysis_details = NULL,
+                             sequence_analysis_details_definitions = NULL,
                              algorithm_comparison = FALSE) {
   stopifnot("W_Sequence_Dataframe" %in% class(w_sequence_dataframe))
+
+  if (!is.null(sil_table)) {
+
+    if (!identical(names(sil_table), c("id", "cluster", "neighbor", "sil_width"))) {
+
+      stop("Error: Columns must be in the following order 'id', 'cluster', 'neighbor', 'sil_width'")
+
+    }
+  }
 
   if (!is.null(sequence_analysis_details)) {
     if (!"list" %in% class(sequence_analysis_details)) {
@@ -80,10 +91,18 @@ generate_reports <- function(w_sequence_dataframe,
 
 
   # Checking which report file structure to be used
-  if (!is.null(sequence_analysis_details)) {
+  if (!is.null(sequence_analysis_details) & is.null(sequence_analysis_details_definitions)) {
+
     report_rmd <- system.file("rmd_w_sequence_analysis_details.Rmd", package = "approxmapR")
+
+  } else if (!is.null(sequence_analysis_details) & !is.null(sequence_analysis_details_definitions)) {
+
+    report_rmd <- system.file("rmd_w_sequence_analysis_details_definitions.Rmd", package = "approxmapR")
+
   } else {
+
     report_rmd <- system.file("rmd_w_sequence.Rmd", package = "approxmapR")
+
   }
 
 
@@ -125,6 +144,12 @@ generate_reports <- function(w_sequence_dataframe,
     ) %>%
     select(-ends_with("_pattern"), -weighted_sequence, -df_sequences)
 
+
+  if (!is.null(sequence_analysis_details_definitions)) {
+    event_defs <- subset(sequence_analysis_details_definitions, event %in% unique(str_split(df_unique_items$sequence, ", ") %>% unlist()))
+  }
+
+
   formatted <-
     formatted %>%
     bind_rows(formatted_trunc) %>%
@@ -132,11 +157,23 @@ generate_reports <- function(w_sequence_dataframe,
     bind_rows(df_unique_items) %>%
     arrange(cluster)
 
-  if (!is.null(sequence_analysis_details)) {
+  if (!is.null(sequence_analysis_details) & is.null(sequence_analysis_details_definitions)) {
     rmarkdown::render(
       report_rmd,
       params = append(list(input = formatted,
                            title = "All Sequences"), sequence_analysis_details),
+                    #output_file = file_check(output_directory_private, "all_sequences.html"),
+                    output_file = file_check(output_directory_private, paste0("all_sequences", end_filename_with, ".html")),
+                    output_dir = output_directory_private
+                  )
+
+  } else if (!is.null(sequence_analysis_details) & !is.null(sequence_analysis_details_definitions)) {
+
+    rmarkdown::render(
+      report_rmd,
+      params = append(list(input = formatted,
+                           title = "All Sequences",
+                           event_definitions = event_defs), sequence_analysis_details),
                     #output_file = file_check(output_directory_private, "all_sequences.html"),
                     output_file = file_check(output_directory_private, paste0("all_sequences", end_filename_with, ".html")),
                     output_dir = output_directory_private
@@ -207,23 +244,70 @@ generate_reports <- function(w_sequence_dataframe,
 
   message("saving alignments...")
 
-  w_sequence_dataframe %>%
-    save_alignment(save_date=FALSE, algorithm_comparison = algorithm_comparison) %>%
-    write_file(paste0(
-      output_directory_private,
-      "/",
-      #file_check(output_directory_private, "alignments.csv")
-      file_check(output_directory_private, paste0("alignments", end_filename_with, ".csv"))
-    ))
+  if (!is.null(sil_table)) {
 
-  w_sequence_dataframe %>%
-    save_alignment(save_date=TRUE, algorithm_comparison = algorithm_comparison) %>%
-    write_file(paste0(
-      output_directory_private,
-      "/",
-      #file_check(output_directory_private, "alignments_with_date.csv")
-      file_check(output_directory_private, paste0("alignments_with_date", end_filename_with, ".csv"))
-    ))
+    sil_table <- sil_table %>% group_by(cluster) %>% mutate(cluster_average = mean(sil_width))
+    sil_table$grand_avg_sil <- mean(sil_table$sil_width)
+    names(sil_table) <- c("id2", "cluster", "neighbor", "sil_width",  "cluster_average", "grand_avg_sil")
+
+  }
+
+
+  if (!is.null(sil_table)) {
+
+    paste0("Grand Silhouette Width", ", ", sil_table$grand_avg_sil[[1]], "\n", "\n",
+           "Cluster", ", ", "Cluster Silhoutte Width", ", ", "Neighbor Cluster", ", ", "id", ", ", "id Silhouette Width", ", ", "Sequence", "\n",
+           w_sequence_dataframe %>% save_alignment(save_date = FALSE, sil_table = sil_table, algorithm_comparison = algorithm_comparison)
+          ) %>%
+      write_file(paste0(
+        output_directory_private,
+        "/",
+        #file_check(output_directory_private, "alignments_with_date.csv")
+        file_check(output_directory_private, paste0("alignments", end_filename_with, ".csv"))
+      ))
+
+  } else {
+
+    w_sequence_dataframe %>%
+      save_alignment(save_date = FALSE, sil_table =sil_table, algorithm_comparison = algorithm_comparison) %>%
+      write_file(paste0(
+        output_directory_private,
+        "/",
+        #file_check(output_directory_private, "alignments.csv")
+        file_check(output_directory_private, paste0("alignments", end_filename_with, ".csv"))
+      ))
+
+  }
+
+
+  if (!is.null(sil_table)) {
+
+    paste0("Grand Silhouette Width", ", ", sil_table$grand_avg_sil[[1]], "\n", "\n",
+           "Cluster", ", ", "Cluster Silhoutte Width", ", ", "Neighbor Cluster", ", ", "id", ", ", "id Silhouette Width", ", ", "Sequence", "\n",
+           w_sequence_dataframe %>% save_alignment(save_date = TRUE, sil_table = sil_table, algorithm_comparison = algorithm_comparison)
+          ) %>%
+      write_file(paste0(
+        output_directory_private,
+        "/",
+        #file_check(output_directory_private, "alignments_with_date.csv")
+        file_check(output_directory_private, paste0("alignments_with_date", end_filename_with, ".csv"))
+      ))
+
+  } else {
+
+    w_sequence_dataframe %>%
+      save_alignment(save_date = TRUE, sil_table = sil_table, algorithm_comparison = algorithm_comparison) %>%
+      write_file(paste0(
+        output_directory_private,
+        "/",
+        #file_check(output_directory_private, "alignments_with_date.csv")
+        file_check(output_directory_private, paste0("alignments_with_date", end_filename_with, ".csv"))
+      ))
+
+  }
+
+
+
 
 
 
@@ -476,7 +560,7 @@ save_alignment.Sequence <- function(sequence) {
     paste0(collapse = ", ")
 }
 
-save_alignment.Sequence_List <- function(alignment, save_date=TRUE, algorithm_comparison = algorithm_comparison) {
+save_alignment.Sequence_List <- function(alignment, save_date=TRUE, sil_table = NULL, algorithm_comparison = algorithm_comparison) {
   map2_chr(alignment, names(alignment), function(seq, id) {
 
     if (algorithm_comparison) {
@@ -487,14 +571,41 @@ save_alignment.Sequence_List <- function(alignment, save_date=TRUE, algorithm_co
 
     } else {
 
-      seqs <- str_c(id, ", ", save_alignment(seq), "\n")
+        if (!is.null(sil_table)) {
+
+          seqs <- str_c((filter(sil_table, id2 == id))$cluster, ", ",
+                        (filter(sil_table, id2 == id))$cluster_average, ", ",
+                        (filter(sil_table, id2 == id))$neighbor, ", ",
+                        id, ", ",
+                        (filter(sil_table, id2 == id))$sil_width, ", ",
+                        save_alignment(seq), "\n")
+
+        } else {
+
+          seqs <- str_c(id, ", ", save_alignment(seq), "\n")
+
+        }
 
     }
 
-    if(save_date) {
+    if (save_date == TRUE) {
 
-      dates <- str_c(id, ", ", align_date_to_seq(id, seq), "\n")
-      paste0(seqs, dates)
+      if (!is.null(sil_table)) {
+
+        dates <- str_c((filter(sil_table, id2 == id))$cluster, ", ",
+                      (filter(sil_table, id2 == id))$cluster_average, ", ",
+                      (filter(sil_table, id2 == id))$neighbor, ", ",
+                      id, ", ",
+                      (filter(sil_table, id2 == id))$sil_width, ", ",
+                      align_date_to_seq(id, seq), "\n")
+        paste0(seqs, dates)
+
+      } else {
+
+        dates <- str_c(id, ", ", align_date_to_seq(id, seq), "\n")
+        paste0(seqs, dates)
+
+      }
 
     } else {
 
@@ -506,11 +617,46 @@ save_alignment.Sequence_List <- function(alignment, save_date=TRUE, algorithm_co
     str_c(collapse = "")
 }
 
-save_alignment.W_Sequence_Dataframe <- function(df, ...) {
-  map2_chr(df$cluster, df$weighted_sequence, function(c, seq) {
-    str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments"), ...))
-  }) %>%
-    str_c(collapse = "\n")
+
+
+
+save_alignment.W_Sequence_Dataframe <- function(df, sil_table, ...) {
+
+  if (!is.null(sil_table)) {
+
+    map2_chr(df$cluster, df$weighted_sequence, function(c, seq) {
+
+        str_c(save_alignment(attr(seq, "alignments"), sil_table = sil_table, ...))
+            }) %>% str_c(collapse = "")
+
+  } else {
+
+    map2_chr(df$cluster, df$weighted_sequence, function(c, seq) {
+        str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments"), ...))
+        }) %>% str_c(collapse = "\n")
+  }
+}
+
+
+
+save_alignment.W_Sequence_Dataframe2 <- function(df, sil_table, ...) {
+
+  if (!is.null(sil_table)) {
+
+    map2_chr(df$cluster, df$weighted_sequence, function(c, seq) {
+
+
+        str_c("Grand Silhouette Width", ", ", sil_table$grand_avg_sil[[1]], "\n", "\n",
+              "Cluster", ", ", "Cluster Silhoutte Width", ", ", "Neighbor Cluster", ", ", "id", ", ", "id Silhouette Width", ", ", "Sequence", "\n",
+              save_alignment(attr(seq, "alignments"), sil_table = sil_table, ...))
+            }) %>% str_c(collapse = "")
+
+  } else {
+
+    map2_chr(df$cluster, df$weighted_sequence, function(c, seq) {
+        str_c("Cluster ", c, "\n", save_alignment(attr(seq, "alignments"), ...))
+        }) %>% str_c(collapse = "\n")
+  }
 }
 
 
@@ -545,5 +691,4 @@ algorithm_comparison <- function(formatted1, formatted1_pars = "No Pars1",
 
 
   )
-
 }

@@ -2,14 +2,18 @@
 \alias{generate_reports}
 \title{Report generation}
 \usage{
-  generate_reports(w_sequence_dataframe, html_format = TRUE,
+  generate_reports(w_sequence_dataframe,  sil_table = NULL, html_format = TRUE,
                   output_directory = "~", end_filename_with = "",
                   sequence_analysis_details = NULL,
+                  sequence_analysis_details_definitions == NULL,
                   algorithm_comparison = FALSE)
 }
 \arguments{
 \item{w_sequence_dataframe}{A dataframe with class "W_Sequence_Dataframe". This will be
 the dataframe that resulted from extracting the patterns after clustering.}
+
+\item{sil_table}{The silhouette_object which is produced by the -find_optimal_k- function that contains the silhouette Information
+for the K value that was selected.}
 
 \item{html_format}{A boolean value to indicate if the exports should have HTML formatting.}
 
@@ -20,6 +24,9 @@ is useful if running multiple algorithms that will be exported to the same outpu
 
 \item{sequence_analysis_details}{This will generate a report that includes details pertaining to the sequence analysis. This
 must be a list with the following structure list("algorithm" = "a string", "k_value" = a number, "time_period" = "a string", "consensus_threshold" = a number, "notes" = "Any special notes as a string.")}
+
+\item{sequence_analysis_details_definitions}{This needs to be an data frame object with column 1 being labelled "event" which contains the events in the data, while column 2 can be any label which
+contains the definitions or descriptions of the event.}
 
 \item{algorithm_comparison}{The option to indicate if the report being generated is
 one that is comparing multiple algorithms, for example the outcome of using the K-NN
