@@ -31,12 +31,16 @@ Defaults to false}
 
 \item{occurence}{Beta}
 
-\item{multiset}{Beta}
+\item{multiset}{Beta; Logical indicator which controls the exclusion of multiple events within the same event set.}
 
-\item{include_date}{Beta}
+\item{include_date}{Logical indicator which controls the inclusion of the date variable in the returning data. If creating reports using the
+-generate_reports- function of approxmapR, then the dates will be included in the alignment_with_date output file if this argument is
+equal to TRUE - default value is FALSE.}
 
 \item{summary_stats}{Logical controlling printing of summary
 statistics regarding aggregation. Defaults to TRUE}
+
+\item{output_directory}{The path to where the exports should be placed.}
 }
 \value{
 Aggregated dataframe that has sequence id, itemset (period) and event (item)
@@ -46,6 +50,11 @@ A dataframe having id, date and event column
 can be aggregated using this function
 }
 \examples{
-mvad \%>\%
-aggregate_sequences(format = "\%Y-\%m-\%d", unit = "month", n_units = 6)
+library(approxmapR)
+
+data("mvad")
+
+# This will aggregate the data using a 6-month frame, i.e. all events which occurred
+#   in 6-months will be grouped into an event set
+mvad \%>\% aggregate_sequences(format = "\%Y-\%m-\%d", unit = "month", n_units = 6)
 }

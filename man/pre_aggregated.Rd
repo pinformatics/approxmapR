@@ -4,21 +4,62 @@
 \alias{pre_aggregated}
 \title{Aggregation functions}
 \usage{
-pre_aggregated(df, summary_stats = TRUE)
+aggregate_sequences(df, include_date = FALSE, multiset = FALSE, summary_stats = TRUE, output_directory = "~")
 }
 \arguments{
-\item{df}{The preaggregated dataframe}
+\item{df}{A dataframe that has either 3 or 4 columns; 3 columns in the order of id, date, event if the date is not
+desired to be included; or 4 columns in the order of id, date, period, event if the date is to be included.}
+
+\item{include_date}{Logical indicator which controls the inclusion of the date variable in the returning data. If creating reports using the
+-generate_reports- function of approxmapR, then the dates will be included in the alignment_with_date output file if this argument is
+equal to TRUE - default value is FALSE.}
+
+\item{multiset}{Beta; Logical indicator which controls the exclusion of multiple events within the same event set.}
 
 \item{summary_stats}{Logical controlling printing of summary
 statistics regarding aggregation. Defaults to TRUE}
 }
+
+\item{output_directory}{The path to where the exports should be placed.}
 \value{
 Returns a dataframe that has the properly classes dataframe
 }
 \description{
-Used whenever the df to be analyzed in preaggregated i.e.
-instead of dates, we have periods (corresponding to itemsets)
+Used whenever the df to be analyzed is preaggregated, i.e. the data has already by grouped into periods (corresponding to itemsets).
 }
 \examples{
-pre_agg_demo \%>\% pre_aggregated()
+library(approxmapR)
+library(tidyverse)
+
+data("demo1")
+demo1 <- data.frame(do.call("rbind", strsplit(as.character(demo1$id.date.item), ",")))
+names(demo1) <- c("id", "period", "event")
+
+# Identifying the earliest date per -id- and setting it as the -index_dt-
+demo1 <- demo1 %>% group_by(id) %>% mutate(index_dt = min(as.Date(period, "%m/%d/%Y"))) %>% ungroup()
+
+# Creating an Index from the earliest date
+demo1 <- demo1 %>%
+          mutate(date = as.Date(period, "%m/%d/%Y")) %>%
+          mutate(period = as.numeric(difftime(date, index_dt, units = "days"))) %>%
+          select(id, period, event) %>% arrange(id, period)
+
+
+# Aggregating custom aggregation frames with the following groupings:
+#    [] index date will be first period (1),
+#    [] the first 28 days after the index date will be grouped into weekly periods (2 - 4), and then
+#    [] events which occurred on the 29th day or more from the index day will be grouped in a monthly frame (5+)
+demo1 <- demo1 %>% group_by(id) %>% mutate(date = period,
+                                          n_ndays7 = period / 7,
+                                          period = as.integer(case_when(period == 0 ~ 1,
+                                                             ceiling(n_ndays7) < 5 ~ ceiling(n_ndays7) + 1,
+                                                             TRUE ~ floor(n_ndays7) + 2))
+                                          ) %>% select(id, date, period, event)
+
+# Since -demo1- has the date column, need to select only the id, period, and event columns if the dates are not
+#    to be included
+agg <- demo1 \%>\% select(id, period, event) \%>\% pre_aggregated()
+
+# No need to select specific columns if the dates are desired to be included
+agg <- demo1 \%>\% pre_aggregated(include_date = TRUE)
 }
