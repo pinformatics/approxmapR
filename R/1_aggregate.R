@@ -128,7 +128,11 @@ pre_aggregated <- function(df,
 
   }
 
-
+  if (include_date) {
+      df <- df %>% arrange(id, date, period)
+  } else {
+      df <- df %>% arrange(id, period)
+  }
 
 
 

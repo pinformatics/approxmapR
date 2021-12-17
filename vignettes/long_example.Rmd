@@ -3,7 +3,7 @@ title: 'Using ApproxMAPR: The long example'
 author: "Corey Bryant"
 date: "2/24/2021"
 output: html_document
-editor_options: 
+editor_options:
   chunk_output_type: inline
 ---
 
@@ -68,9 +68,9 @@ column names and order are specific and required.
 
 ### Aggregating the Data
 
-There are two functions available to aggregate the data, pre_aggregated() and 
-aggregate_sequences(). The pre_aggregated() function is used on data were 
-the "period" column is a single identifier (ex. A, B, C, etc) while the aggregate_sequences() 
+There are two functions available to aggregate the data, pre_aggregated() and
+aggregate_sequences(). The pre_aggregated() function is used on data were
+the "period" column is a single identifier (ex. A, B, C, etc) while the aggregate_sequences()
 function is used on datetime or date data and will aggregate by "day", "week", "month",
 "6 months", and "year".
 
@@ -83,9 +83,9 @@ agg_df <-  demo1 %>% aggregate_sequences(format = "%m/%d/%Y",
 head(agg_df)
 ```
 
-For documentation use ??aggregate_sequences() or ??pre_aggregated(). The -n_units- 
+For documentation use ??aggregate_sequences() or ??pre_aggregated(). The -n_units-
 is specifying how many -units- to be considered within the period. The above indicates
-the events are to be aggregated based on the month and to considered 1 month as 
+the events are to be aggregated based on the month and to considered 1 month as
 a period. If -n_units- were to equal 2, then that would indicate to aggregate based
 on the month and to considered 2 months as a period.
 
@@ -102,10 +102,10 @@ cluster validation measures, and a plot of K values by validation measure. For
 more information use ??find_optimal_k.
 
 
-A special note about the -use_cache- parameter within the -find_optimal_k()- function. 
-This parameter will indicate that the distance matrix calculated should be one that has 
-already been calculated; if it does not yet exist then the distance matrix will be 
-calculated and stored as an environment variable. For those interested, this environment 
+A special note about the -use_cache- parameter within the -find_optimal_k()- function.
+This parameter will indicate that the distance matrix calculated should be one that has
+already been calculated; if it does not yet exist then the distance matrix will be
+calculated and stored as an environment variable. For those interested, this environment
 variable can be accessed by using:
 
 ```
@@ -118,14 +118,43 @@ is expensive in terms of processing.
 
 #### Example: Optimal K using K-Medoids
 ```{r, warning = FALSE, message = FALSE, fig.show = 'show'}
-agg_df %>% find_optimal_k(clustering = 'k-medoids', 
-                          min_k = 2, max_k = 8, 
-                          validation_measure = 'silhouette',
-                          use_cache = TRUE)
+ktable <- agg_df %>% find_optimal_k(clustering = 'k-medoids',
+                                    min_k = 2, max_k = 8,
+                                    save_table = TRUE,
+                                    use_cache = TRUE)
+```
+
+One can either view the ktable object and manually search for the optimal value based on the
+preferred cluster validation measure, or one can visualize the table. By default,
+the -plot_ktable()- function will plot the silhouette index and save the graph to
+the default location; if desired, one can specify where the graph saves to by using
+the output_directory parameter.
+
+```{r, warning = FALSE, message = FALSE, fig.show = 'show'}
+plot_ktable(ktable)
 ```
 
 Based on the average silhouette measure, K = 6 should be used for the K-Medoids
-algorithm.
+algorithm. We can further assess the fit of clusters, if using the silhouette index, by
+taking a look at the silhouette object which is stored within the ktable object. Additionally,
+we can visualize this graphically as well.
+
+In this example, to review the silhouette object use with the optimal K use:
+
+```{r, warning = FALSE, message = FALSE, fig.show = 'show'}
+ktable$silhouette_object[[5]]
+```
+
+By visualizing the information graphically, the function produces a silhouette plot
+for the individual sequence as well as the cluster. For more information on this
+function use ??plot_silhouette.
+
+```{r, warning = FALSE, message = FALSE, fig.show = 'show'}
+plot_silhouette(ktable$silhouette_object[[5]])
+```
+
+
+
 
 ### Clustering
 
@@ -180,7 +209,7 @@ agg_df %>% filter(id == 5)
 
 Notice how events B, I, and J are within the same set - as well as events K and L
 are in the same set, but different than B, I, and J. This is because events B, I,
-and J occurred during the first period, while events K and L occurred during a 
+and J occurred during the first period, while events K and L occurred during a
 different period.
 
 
@@ -189,7 +218,7 @@ different period.
 Next step is to pull the pattern, this is completed by specifying a strength
 threshold. This pulls the events within a weighted sequence that is shared
 by the majority of sequences within a cluster; for more information please
-see 
+see
 Kum, H. C., Pei, J, Wang, W., and Duncan, D. (2002). ApproxMAP: Approximate Mining of Consensus Sequential Patterns.
 Technical Report TR02-031, UNC-CH, 2002. Published in Mining Sequential Patterns from Large Data Sets. Springer Series: The Kluwer International Series on
 Advances in Database Systems, Vol. 28. Wang, W. & Yang, J. pp. 138-160.
@@ -198,7 +227,7 @@ Advances in Database Systems, Vol. 28. Wang, W. & Yang, J. pp. 138-160.
 
 ```{r, warning = FALSE}
 
-patterns_kmed <- clustered_kmed %>% 
+patterns_kmed <- clustered_kmed %>%
                     filter_pattern(threshold = 0.3,
                                    pattern_name = 'consensus')
 
@@ -214,19 +243,3 @@ The final step is to generate a report based on the threshold.
 patterns_kmed %>% generate_reports(end_filename_with = "_kmed")
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
