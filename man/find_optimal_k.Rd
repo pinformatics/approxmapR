@@ -2,7 +2,7 @@
 \alias{find_optimal_k}
 \title{Clustering Functions}
 \usage{
-  find_optimal_k(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10, validation_measure = 'silhouette',
+  find_optimal_k(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10,
                               use_cache = TRUE, save_table = TRUE, file_name = NULL , output_directory = "~")
 }
 \arguments{
@@ -15,21 +15,6 @@
 \item{mink_k}{The starting K value.}
 
 \item{max_k}{The ending K value.}
-
-\item{validation_measure}{The clustering validation measure to be used. The following measures are
-cuurently supported:
-
-    * Average silhouette width (validation_measure = 'silhouette')
-
-    * Dunn index (validation_measure = 'dunn')
-
-    * Average distance within clusters (validation_measure = 'average_within')
-
-    * Average distance between clusters (validation_measure = 'average_between')
-
-    * Ratio of average distance within cluster / average distance between clusters (validation_measure = 'wb_ratio')
-
-    * Half the sum of the within cluster squared dissimilarities divided by the cluster size (validation_measure = 'within_cluster_ss')}
 
 \item{use_cache}{A boolean value to indicate weather or not to use the cached distance matrix.}
 
@@ -62,5 +47,5 @@ validation measure and K values.
                         n_units = 1,
                         summary_stats = FALSE) \%>\%
     find_optimal_k(clustering = 'k-nn', min_k = 2, max_k = 10,
-                   validation_measure = 'silhouette', use_cache = TRUE)
+                   use_cache = TRUE)
 }

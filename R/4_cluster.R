@@ -285,7 +285,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
 
 #' @export
-find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10, validation_measure = 'silhouette',
+find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10,
                             use_cache = TRUE, save_table = FALSE, file_name = NULL , output_directory = "~") {
 
 
