@@ -16,11 +16,12 @@ equal to TRUE - default value is FALSE.}
 
 \item{multiset}{Beta; Logical indicator which controls the exclusion of multiple events within the same event set.}
 
-\item{summary_stats}{Logical controlling printing of summary
-statistics regarding aggregation. Defaults to TRUE}
-}
+\item{summary_stats}{Logical controlling printing of summary statistics regarding aggregation. Defaults to TRUE}
 
 \item{output_directory}{The path to where the exports should be placed.}
+}
+
+
 \value{
 Returns a dataframe that has the properly classes dataframe
 }
