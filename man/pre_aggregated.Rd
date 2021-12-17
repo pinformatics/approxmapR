@@ -37,25 +37,25 @@ demo1 <- data.frame(do.call("rbind", strsplit(as.character(demo1$id.date.item), 
 names(demo1) <- c("id", "period", "event")
 
 # Identifying the earliest date per -id- and setting it as the -index_dt-
-demo1 <- demo1 %>% group_by(id) %>% mutate(index_dt = min(as.Date(period, "%m/%d/%Y"))) %>% ungroup()
+demo1 <- demo1 \%>\% group_by(id) \%>\% mutate(index_dt = min(as.Date(period, "\%m/\%d/\%Y"))) %>% ungroup()
 
 # Creating an Index from the earliest date
-demo1 <- demo1 %>%
-          mutate(date = as.Date(period, "%m/%d/%Y")) %>%
-          mutate(period = as.numeric(difftime(date, index_dt, units = "days"))) %>%
-          select(id, period, event) %>% arrange(id, period)
+demo1 <- demo1 \%>\%
+          mutate(date = as.Date(period, "\%m/\%d/\%Y")) \%>\%
+          mutate(period = as.numeric(difftime(date, index_dt, units = "days"))) \%>\%
+          select(id, period, event) \%>\% arrange(id, period)
 
 
 # Aggregating custom aggregation frames with the following groupings:
 #    [] index date will be first period (1),
 #    [] the first 28 days after the index date will be grouped into weekly periods (2 - 4), and then
 #    [] events which occurred on the 29th day or more from the index day will be grouped in a monthly frame (5+)
-demo1 <- demo1 %>% group_by(id) %>% mutate(date = period,
+demo1 <- demo1 \%>\% group_by(id) \%>\% mutate(date = period,
                                           n_ndays7 = period / 7,
                                           period = as.integer(case_when(period == 0 ~ 1,
                                                              ceiling(n_ndays7) < 5 ~ ceiling(n_ndays7) + 1,
                                                              TRUE ~ floor(n_ndays7) + 2))
-                                          ) %>% select(id, date, period, event)
+                                          ) \%>\% select(id, date, period, event)
 
 # Since -demo1- has the date column, need to select only the id, period, and event columns if the dates are not
 #    to be included
