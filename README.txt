@@ -1,31 +1,36 @@
 NAME: README.TXT
 DESCRIPTION: This file provides documentation for the R-package approxmapR.
-Date Created: 10/7/19
-Last Updated: 03/18/21
+Last Updated: 12/20/2021
 
-Folders (taken from gitHub)
-data: contains the test datasets
-inst: legend for reports
-man: contains the *.rd files for the package
-R: the numbered files creating the tool
+===========================================
+= Folders Descriptions (listed on GitHub) =
+===========================================
+data: Contains test datasets.
+inst: Legend for reports.
+man: contains the *.rd files for the package; these files are the how-to-use documentation for functions in the package.
+R: The files which contain the R code that makes the package.
 src:
-tests: a few test cases
-vignettes: contains the files to learn approxmapR
+tests: A few test cases which uses -testthat-.
+vignettes: Contains examples on how to use approxmapR and helps one learn the package.
 
-----------------------------------------
 
-Approxmap is an algorithm used for exploratory data analysis of sequential data. When we have longitudinal data and we want to find out the underlying patterns, we use approxmap. `approxmapR` aims to provide a consistent and tidy api for using the algorithm in R. This vignette aims to demonstrate the basic workflow of approxmapR.
+=======================
+= Package DESCRIPTION =
+=======================
 
-----------------------------------------
+::NOTE:: If using on a Windows computer, this package requires RTools to be installed on the machine since it uses C++ code for the computationally expensive portion. One can install RTools from https://cran.r-project.org/bin/windows/Rtools/rtools40.html.
 
-A description of the package can be found at:
-vignettes/approxmapR-getting-started.Rmd
+Approxmap is an algorithm used for exploratory data analysis of sequential data which uses an approximate alignment approach developed by Dr. Hye-Chun Kum. This approach is used on longitudinal data when one is wanting to identify the underlying patterns.
+ApproxmapR aims to provide a consistent and tidy API for using the algorithm in R. There are two vignettes which are encouraged to be reviewed before using the package; they can be found in the vignettes folder and are titled:
 
-A Description of Functions within the package is available at "Document_approxmap.R"
+(1) approxmapR-getting-started.Rmd, and
+(2) long_example.Rmd
 
-----------------------------------------
+Example data is provided while getting familiar with the package.
 
-The folder "data" contains two relevant datasets used for testing purposes.
 
-"demo1.csv" contains a smaller dataset to practice testing the clustering algorithm on.
-"mvad.rda" contains the larger dataset to practice testing the algorithm.
+==============
+= References =
+==============
+
+Kum, Hye-Chung, Pei, J., Wang, W., and Duncan, D. (2002). ApproxMAP: Approximate Mining of Consensus Sequential Patterns. Mining Sequential Patterns from Large Data Sets. Springer Series (28): The Kluwer International Series on Advances in Database Systems, pp. 138-160.
