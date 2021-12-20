@@ -42,13 +42,13 @@ A function which allows one to visualize the silhouette values for the individua
   names(demo1) <- c("id", "period", "event")
 
 
-  agg <- demo1 %>% aggregate_sequences(format = "%m/%d/%Y",
+  agg <- demo1 \%>\% aggregate_sequences(format = "\%m/\%d/\%Y",
                                      unit = "month",
                                      n_units = 1,
                                      include_date = TRUE,
                                      summary_stats = TRUE)
 
-  ktable <- agg %>% find_optimal_k(clustering = "k-medoids", min_k = 2, max_k = 9,
+  ktable <- agg \%>\% find_optimal_k(clustering = "k-medoids", min_k = 2, max_k = 9,
                                    use_cache = TRUE, save_table = TRUE)
 
   plot_silhouette(ktable$silhouette_object[[8]])
