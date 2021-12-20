@@ -192,8 +192,8 @@ pattern_search(pats, find_pattern = "(D, B)")
 # Here we are searching for sequences that have events B4 and C5 occurring within an event set,
 #   and events K1 and L2 occurring with an event set - both must occur
 #
-# Each event set needs to be separated by a comma and a space
-pattern_search(pats, find_pattern = "(C5, B4), (K1, L2)")
+# Each event set needs to be separated by a space
+pattern_search(pats, find_pattern = "(C5, B4) (K1, L2)")
 
 
 
@@ -208,8 +208,8 @@ pattern_search(pats, find_pattern = "(C5, B4), (K1, L2)")
 #         events are allowed to be occur before, after, or between events specified
 
 # For example, the following 2 searched will not return the same results
-pattern_search(pats, find_pattern = "(I, Z), (B)")
-pattern_search(pats, find_pattern = "(I, Z), (B)", event_set = TRUE)
+pattern_search(pats, find_pattern = "(I, Z) (B)")
+pattern_search(pats, find_pattern = "(I, Z) (B)", event_set = TRUE)
 # In order to duplicate the results returned with event_set = TRUE, the correct
 #   pattern specification would be:
-pattern_search(pats, find_pattern = "(I, event*, Z), (B, event*)", event_set = TRUE)
+pattern_search(pats, find_pattern = "(I, event*, Z) (B, event*)", event_set = TRUE)
