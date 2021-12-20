@@ -44,14 +44,14 @@ demo1 <- data.frame(do.call("rbind", strsplit(as.character(demo1$id.date.item), 
 names(demo1) <- c("id", "period", "event")
 
 
-agg <- demo1 %>% aggregate_sequences(format = "%m/%d/%Y",
+agg <- demo1 \%>\% aggregate_sequences(format = "\%m/\%d/\%Y",
                                      unit = "month",
                                      n_units = 1,
                                      summary_stats = FALSE)
 
 
-clustered <- agg %>% cluster_kmedoids(k = 2, use_cache = TRUE)
-pats <- clustered %>% filter_pattern(threshold = 0.3, pattern_name = "consensus")
+clustered <- agg \%>\% cluster_kmedoids(k = 2, use_cache = TRUE)
+pats <- clustered \%>\% filter_pattern(threshold = 0.3, pattern_name = "consensus")
 
 
 # Find all sequences which contain an event set with events K and M;
