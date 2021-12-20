@@ -4,16 +4,18 @@
 \alias{aggregate_sequences}
 \title{Aggregation functions}
 \usage{
-aggregate_sequences(unaggregated_data, format = "\%m-\%d-\%Y",
+aggregate_sequences(unaggregated_data, format = "\%m-\%d-\%Y", index_date = FALSE,
   calendar = FALSE, unit = "week", n_units = 1, anchor_table = NA,
   anchor_vector = NA, base_date = NA, occurence = min, multiset = FALSE,
-  include_date = FALSE, summary_stats = TRUE)
+  include_date = FALSE, summary_stats = TRUE, output_directory = "~")
 }
 \arguments{
 \item{unaggregated_data}{A dataframe that has exactly 3 columns
 in this order - id, date, event}
 
 \item{format}{String specifying format of the date}
+
+\item{index_date}{Logical indicator which indicates if the data is in a numerical format which represents the number of days since an index event, i.e. 0 represents first date, 1 respresents 1 day since index date (0), 2 represents 2 days since index date (0), etc.}
 
 \item{calendar}{Boolean indicating whether or not to use calendar aggregation.
 Defaults to false}
