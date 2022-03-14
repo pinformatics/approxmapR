@@ -40,6 +40,10 @@ custom_agg <- demo2 %>%
                                                      TRUE ~ floor(n_ndays7) + 2))) %>%
                 select(id, date, period, item) %>% arrange(id, date)
 
+
+
+
+
 ## The custom grouping time frame demonstrated in -Route (2)- has the index date (0)
 ##  be an event set of it's own, the first 4 weeks calculated will each be 
 ##  their own event set, i.e. every 7 days will be grouped together, and every
