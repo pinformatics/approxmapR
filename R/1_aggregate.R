@@ -491,3 +491,66 @@ print.Sequence_List <- function(sequences) {
 print_raw <- function(obj) {
     obj %>% unclass() %>% print()
 }
+
+
+
+
+
+
+
+
+
+process_varying_aggregation <- function(df, scheme = 1) {
+
+
+  if (scheme == 1) {
+  # scheme 1 is the original variable index length, i.e.:
+  #
+  #   period 1 is the index date,
+  #   periods 2 - 5 are grouped by 7 days,
+  #   period 6+ are grouped by 30 days
+
+    df <- df %>% group_by(id) %>%
+                 mutate(n_ndays7 = date / 7,
+                        date_shifted_28 = if_else(date >= 29, date - 28, 0),
+                        monthly_period = ceiling(date_shifted_28 / 30),
+                        period = case_when(date == 0 ~ 1,
+                                           date <= 28 ~ ceiling(n_ndays7) + 1,
+                                           date >= 29 ~ monthly_period + 5)) %>% ungroup() %>%
+                        select(-n_ndays7, -date_shifted_28, -monthly_period)
+
+  } else if (scheme == 2) {
+    # scheme 2 is:
+    #
+    #   period 1 is the index date,
+    #   period 2+ are grouped month
+
+    df <- df %>% group_by(id) %>%
+                 mutate(n_ndays = date / 30,
+                        period = as.integer(case_when(date == 0 ~ 1,
+                                                      ceiling(n_ndays) < 5 ~ ceiling(n_ndays) + 1,
+                                                      TRUE ~ floor(n_ndays) + 2))) %>% ungroup() %>%
+                 select(-n_ndays)
+
+  } else if (scheme == 3) {
+    # scheme 3 is:
+    #
+    # periods 1 - 4 are grouped by 7 days,
+    # periods 5 + are grouped by 30 days
+
+    df <- df %>% group_by(id) %>%
+                 mutate(date_shifted_1 = date + 1,
+                        date_shifted_28 = if_else(date_shifted_1 >= 29, date_shifted_1 - 28, 0),
+                        n_ndays7 = date_shifted_1 / 7,
+                        monthly = date_shifted_28 / 30,
+                        monthly_period = ceiling(monthly),
+                        period = if_else(monthly_period < 1, ceiling(n_ndays7), 4 + monthly_period)) %>% ungroup() %>%
+                select(-date_shifted_1, -date_shifted_28, -n_ndays7, -monthly, -monthly_period)
+
+  }
+
+
+  df
+
+
+}
