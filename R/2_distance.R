@@ -175,6 +175,6 @@ inter_sequence_distance.W_Sequence <-
     }
 
 #' @export
-inter_sequence_distance.Sequence_List <- function(sequence_list) {
-    inter_sequence_distance_cpp(sequence_list)
+inter_sequence_distance.Sequence_List <- function(sequence_list, weight, dict) {
+    inter_sequence_distance_cpp(sequence_list, weight, dict)
 }

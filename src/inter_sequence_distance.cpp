@@ -11,7 +11,7 @@ using namespace Rcpp;
 
 //' @export
 // [[Rcpp::export]]
-float calculate_sorenson_distance_cpp(StringVector itemset_1, StringVector itemset_2)
+float calculate_sorenson_distance_cpp(StringVector itemset_1, StringVector itemset_2, NumericMatrix weight, List dict)
 {
   int seq_1_length = itemset_1.length();
   int seq_2_length = itemset_2.length();
@@ -19,6 +19,7 @@ float calculate_sorenson_distance_cpp(StringVector itemset_1, StringVector items
 
   for(int i = 0; i < seq_1_length; i++)
   {
+    float w_min = 100;
     bool found  = FALSE;
     for(int j = 0; j < seq_2_length; j++)
     {
@@ -27,28 +28,45 @@ float calculate_sorenson_distance_cpp(StringVector itemset_1, StringVector items
         found  = TRUE;
         break;
       }
+      String s1(itemset_1[i]);
+      String s2(itemset_2[j]);
+      double index1 = dict[s1];
+      double index2 = dict[s2];
+
+      if(weight(index1, index2) < w_min)
+      {
+        w_min = weight(index1, index2);
+      }
     }
     if(!found)
     {
-      seq_1_diff = seq_1_diff + 1;
+      seq_1_diff = seq_1_diff + w_min;
     }
   }
 
   for(int i = 0; i < seq_2_length; i++)
   {
+    float w_min = 100;
     bool found  = FALSE;
     for(int j = 0; j < seq_1_length; j++)
     {
-
       if(itemset_2[i]==itemset_1[j])
       {
         found  = TRUE;
         break;
       }
+      String s1(itemset_2[i]);
+      String s2(itemset_1[j]);
+      double index1 = dict[s1];
+      double index2 = dict[s2];
+      if(weight(index1, index2) < w_min)
+      {
+        w_min = weight(index1, index2);
+      }
     }
     if(!found)
     {
-      seq_2_diff = seq_2_diff + 1;
+      seq_2_diff = seq_2_diff + w_min;
     }
   }
 
@@ -59,7 +77,7 @@ float calculate_sorenson_distance_cpp(StringVector itemset_1, StringVector items
 
 //' @export
 // [[Rcpp::export]]
-float dist_bw_sequences_cpp(List sequence_1, List sequence_2)
+float dist_bw_sequences_cpp(List sequence_1, List sequence_2, NumericMatrix weight, List dict)
 {
   int seq_1_length = sequence_1.length();
   int seq_2_length = sequence_2.length();
@@ -86,7 +104,7 @@ float dist_bw_sequences_cpp(List sequence_1, List sequence_2)
     for(int j = 1; j<(distance_matrix.ncol()); j++)
     {
 
-      float repl = ((float)(distance_matrix(i-1,j-1))) + calculate_sorenson_distance_cpp(sequence_1[i-1],sequence_2[j-1]);
+      float repl = ((float)(distance_matrix(i-1,j-1))) + calculate_sorenson_distance_cpp(sequence_1[i-1],sequence_2[j-1], weight, dict);
       float indel_d = ((float)(distance_matrix(i-1,j))) + (float)1;
       float indel_r = ((float)(distance_matrix(i,j-1))) + (float)1;
       distance_matrix(i,j) = min(NumericVector::create(repl,indel_d,indel_r));
@@ -101,7 +119,7 @@ float dist_bw_sequences_cpp(List sequence_1, List sequence_2)
 
 //' @export
 // [[Rcpp::export]]
-NumericMatrix inter_sequence_distance_cpp(List sequences)
+NumericMatrix inter_sequence_distance_cpp(List sequences, NumericMatrix weight, List dict)
 {
   int seq_list_length = sequences.length();
   Progress p(seq_list_length*seq_list_length, true);
@@ -117,7 +135,7 @@ NumericMatrix inter_sequence_distance_cpp(List sequences)
       } else if(distance_matrix(j,i) != 0) {
         distance_matrix(i,j) = distance_matrix(j,i);
       } else {
-        distance_matrix(i,j) = dist_bw_sequences_cpp(sequences[i],sequences[j]);
+        distance_matrix(i,j) = dist_bw_sequences_cpp(sequences[i],sequences[j], weight, dict);
         p.increment();
         p.increment();
       }

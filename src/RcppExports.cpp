@@ -5,46 +5,57 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // calculate_sorenson_distance_cpp
-float calculate_sorenson_distance_cpp(StringVector itemset_1, StringVector itemset_2);
-RcppExport SEXP _approxmapR_calculate_sorenson_distance_cpp(SEXP itemset_1SEXP, SEXP itemset_2SEXP) {
+float calculate_sorenson_distance_cpp(StringVector itemset_1, StringVector itemset_2, NumericMatrix weight, List dict);
+RcppExport SEXP _approxmapR_calculate_sorenson_distance_cpp(SEXP itemset_1SEXP, SEXP itemset_2SEXP, SEXP weightSEXP, SEXP dictSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< StringVector >::type itemset_1(itemset_1SEXP);
     Rcpp::traits::input_parameter< StringVector >::type itemset_2(itemset_2SEXP);
-    rcpp_result_gen = Rcpp::wrap(calculate_sorenson_distance_cpp(itemset_1, itemset_2));
+    Rcpp::traits::input_parameter< NumericMatrix >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< List >::type dict(dictSEXP);
+    rcpp_result_gen = Rcpp::wrap(calculate_sorenson_distance_cpp(itemset_1, itemset_2, weight, dict));
     return rcpp_result_gen;
 END_RCPP
 }
 // dist_bw_sequences_cpp
-float dist_bw_sequences_cpp(List sequence_1, List sequence_2);
-RcppExport SEXP _approxmapR_dist_bw_sequences_cpp(SEXP sequence_1SEXP, SEXP sequence_2SEXP) {
+float dist_bw_sequences_cpp(List sequence_1, List sequence_2, NumericMatrix weight, List dict);
+RcppExport SEXP _approxmapR_dist_bw_sequences_cpp(SEXP sequence_1SEXP, SEXP sequence_2SEXP, SEXP weightSEXP, SEXP dictSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type sequence_1(sequence_1SEXP);
     Rcpp::traits::input_parameter< List >::type sequence_2(sequence_2SEXP);
-    rcpp_result_gen = Rcpp::wrap(dist_bw_sequences_cpp(sequence_1, sequence_2));
+    Rcpp::traits::input_parameter< NumericMatrix >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< List >::type dict(dictSEXP);
+    rcpp_result_gen = Rcpp::wrap(dist_bw_sequences_cpp(sequence_1, sequence_2, weight, dict));
     return rcpp_result_gen;
 END_RCPP
 }
 // inter_sequence_distance_cpp
-NumericMatrix inter_sequence_distance_cpp(List sequences);
-RcppExport SEXP _approxmapR_inter_sequence_distance_cpp(SEXP sequencesSEXP) {
+NumericMatrix inter_sequence_distance_cpp(List sequences, NumericMatrix weight, List dict);
+RcppExport SEXP _approxmapR_inter_sequence_distance_cpp(SEXP sequencesSEXP, SEXP weightSEXP, SEXP dictSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type sequences(sequencesSEXP);
-    rcpp_result_gen = Rcpp::wrap(inter_sequence_distance_cpp(sequences));
+    Rcpp::traits::input_parameter< NumericMatrix >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< List >::type dict(dictSEXP);
+    rcpp_result_gen = Rcpp::wrap(inter_sequence_distance_cpp(sequences, weight, dict));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_approxmapR_calculate_sorenson_distance_cpp", (DL_FUNC) &_approxmapR_calculate_sorenson_distance_cpp, 2},
-    {"_approxmapR_dist_bw_sequences_cpp", (DL_FUNC) &_approxmapR_dist_bw_sequences_cpp, 2},
-    {"_approxmapR_inter_sequence_distance_cpp", (DL_FUNC) &_approxmapR_inter_sequence_distance_cpp, 1},
+    {"_approxmapR_calculate_sorenson_distance_cpp", (DL_FUNC) &_approxmapR_calculate_sorenson_distance_cpp, 4},
+    {"_approxmapR_dist_bw_sequences_cpp", (DL_FUNC) &_approxmapR_dist_bw_sequences_cpp, 4},
+    {"_approxmapR_inter_sequence_distance_cpp", (DL_FUNC) &_approxmapR_inter_sequence_distance_cpp, 3},
     {NULL, NULL, 0}
 };
 

@@ -75,7 +75,13 @@ merge_clusters <- function(df_cluster) {
 
 
 #' @export
-cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
+cluster_knn <- function(df_aggregated,
+                        k,
+                        use_cache = TRUE,
+                        weight = matrix(1, 14, 14),
+                        dict = list("A"=0, "B"=1, "C"=2, "D"=3, "E"=4,
+                                    "I"=5, "J"=6, "K"=7, "L"=8, "M"=9,
+                                    "V"=10, "W"=11, "Y"=12, "Z"=13)) {
     # message('------------Clustering------------')
     stopifnot("Aggregated_Dataframe" %in% class(df_aggregated))
 
@@ -92,7 +98,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
             rm(env_dm)
             df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
             message("Calculating distance matrix... \n")
-            distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
+            distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence), weight, dict)
         }
     } else {
         if (use_cache) {
@@ -100,7 +106,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
             df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
             message("Calculating distance matrix... \n")
-            distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
+            distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence), weight, dict)
 
             .GlobalEnv$env_dm$df_aggregated <- df_aggregated
             .GlobalEnv$env_dm$df_sequence <- df_sequence
@@ -110,7 +116,7 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
         } else {
             df_sequence <- df_aggregated %>% convert_to_sequence() %>% ungroup()
             message("Calculating distance matrix... \n")
-            distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence))
+            distance_matrix <- inter_sequence_distance(df_sequence %>% pull(sequence), weight, dict)
         }
     }
 
@@ -191,7 +197,13 @@ cluster_knn <- function(df_aggregated, k, use_cache = TRUE) {
 
 
 #' @export
-cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
+cluster_kmedoids <- function(df_aggregated,
+                             k,
+                             use_cache = TRUE,
+                             weight = matrix(1, 14, 14),
+                             dict = list("A"=0, "B"=1, "C"=2, "D"=3, "E"=4,
+                                         "I"=5, "J"=6, "K"=7, "L"=8, "M"=9,
+                                         "V"=10, "W"=11, "Y"=12, "Z"=13)) {
 
   #df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
 
@@ -218,7 +230,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
           rm(env_dm)
           df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
           message("Calculating distance matrix... \n")
-          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence), weight, dict)
           distance_matrix[is.na(distance_matrix)] = 0
       }
   } else {
@@ -227,7 +239,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
           df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
           message("Calculating distance matrix... \n")
-          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence), weight, dict)
 
           .GlobalEnv$env_dm$df_aggregated <- df_aggregated
           .GlobalEnv$env_dm$df_sequence <- df_cluster
@@ -239,7 +251,7 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
       } else {
           df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
           message("Calculating distance matrix... \n")
-          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+          distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence), weight, dict)
           distance_matrix[is.na(distance_matrix)] = 0
       }
   }
@@ -285,8 +297,18 @@ cluster_kmedoids <- function(df_aggregated, k, use_cache = TRUE) {
 
 
 #' @export
-find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k = 10,
-                            use_cache = TRUE, save_table = FALSE, file_name = NULL , output_directory = "~") {
+find_optimal_k <- function(df_aggregated,
+                           clustering = 'k-nn',
+                           min_k = 2,
+                           max_k = 10,
+                          use_cache = TRUE,
+                          save_table = FALSE,
+                          file_name = NULL ,
+                          output_directory = "~",
+                          weight = matrix(1, 14, 14),
+                          dict = list("A"=0, "B"=1, "C"=2, "D"=3, "E"=4,
+                                      "I"=5, "J"=6, "K"=7, "L"=8, "M"=9,
+                                      "V"=10, "W"=11, "Y"=12, "Z"=13)) {
 
 
   # Testing valid parameter entries
@@ -320,7 +342,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
       rm(env_dm)
       df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
       message("Calculating distance matrix... \n")
-      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence), weight, dict)
       distance_matrix[is.na(distance_matrix)] = 0
     }
   } else {
@@ -329,7 +351,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
 
       df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
       message("Calculating distance matrix... \n")
-      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence), weight, dict)
 
       .GlobalEnv$env_dm$df_aggregated <- df_aggregated
       .GlobalEnv$env_dm$df_sequence <- df_cluster
@@ -341,7 +363,7 @@ find_optimal_k <- function(df_aggregated, clustering = 'k-nn', min_k = 2, max_k 
     } else {
       df_cluster <- df_aggregated %>% convert_to_sequence() %>% ungroup()
       message("Calculating distance matrix... \n")
-      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence))
+      distance_matrix <- inter_sequence_distance(df_cluster %>% pull(sequence), weight, dict)
       distance_matrix[is.na(distance_matrix)] = 0
     }
   }
